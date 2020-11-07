@@ -75,6 +75,9 @@ pub enum KomaInf {
     EOU = KomaInf::Enemy as isize + KomaInf::OU as isize, //敵の玉
 }
 
+/// 利き。
+type Kiki = usize;
+
 /// 局面。
 pub struct Kyokumen {
     /// 桂馬の利きが盤外のさらに外にはみ出すことを考慮して設けてある。
@@ -98,4 +101,11 @@ pub struct Kyokumen {
     /// その方向に飛んで動くことが出来るか？
     /// 飛車角香車と龍と馬しかそういう駒はない
     pub can_jump: [[isize; 64]; 12],
+
+    /// 味方の駒の利き
+    pub control_s: [Kiki; 16 * 11],
+    /// 敵の駒の利き
+    pub control_e: [Kiki; 16 * 11],
+    pub king_s: Kiki,
+    pub king_e: Kiki,
 }
