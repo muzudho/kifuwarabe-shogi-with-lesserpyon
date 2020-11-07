@@ -1,7 +1,5 @@
 pub mod kyokumen;
 
-// use crate::kyokumen::*;
-
 fn main() {
     println!("Kifuwarabe's shogi with Usapyon");
 
@@ -91,4 +89,13 @@ pub struct Kyokumen {
 
     /// 持ち駒の枚数。
     pub hand: [usize; KomaInf::EHI as usize + 1 as usize],
+
+    /// 方向を示す定数。
+    pub direct: [isize; 12],
+
+    /// その方向に動けるか？その方向に飛んで動くものは入れてはいけない。
+    pub can_move: [[isize; 64]; 12],
+    /// その方向に飛んで動くことが出来るか？
+    /// 飛車角香車と龍と馬しかそういう駒はない
+    pub can_jump: [[isize; 64]; 12],
 }
