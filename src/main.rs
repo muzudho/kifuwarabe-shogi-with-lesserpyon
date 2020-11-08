@@ -4,7 +4,7 @@ pub mod te;
 fn main() {
     println!("Kifuwarabe's shogi with Usapyon");
 
-    let kyokumen = Kyokumen::default();
+    let _kyokumen = Kyokumen::default();
 }
 
 /// Empty=0,
@@ -79,36 +79,66 @@ pub enum KomaInf {
 /// 利き。
 type Kiki = usize;
 
+/// 方向を示す定数。
+const DIRECT: [isize; 12] = [17, 1, -15, 16, -16, 15, -1, -17, 14, -18, 18, -14];
+
 /// 局面。
 pub struct Kyokumen {
-    /// 桂馬の利きが盤外のさらに外にはみ出すことを考慮して設けてある。
+    /// メモリ上の隙間  
+    ///
+    /// 桂馬の利きがbanからはみ出すので、はみ出す分を確保しておきます。  
+    /// C++では、構造体の内部の変数の並び順は宣言した順になることを利用しています。  
+    /// 普通はあまり使わない「汚い」テクニックですけど、こういうテクニックもあるということで。  
+    ///
+    /// # Remarks
     ///
     /// * `KomaInf::Wall` - banpaddingの中は、常にWALLである。
     pub banpadding: [KomaInf; 16],
 
-    /// 盤面。
+    /// 盤面  
+    ///
+    /// 2次元配列を使うと遅いので、１次元配列を使います。また、掛け算の際に、＊９とかを用いるよりも、  
+    /// 2の階乗を掛け算に使うと掛け算が早くなるので、＊１６を使います。  
+    /// 駒の位置は、例えば７七なら、７＊１６＋七のようにあらわします。  
+    /// つまり、７七なら１６進数で0x77になるわけです。  
+    ///
+    /// # Remarks
     ///
     /// * `16 *` - 高速化のためには、１次元配列として、演算としては＊１６など２の階乗倍が使えることが望ましい。
     pub ban: [KomaInf; 16 * (9 + 2)],
 
-    /// 持ち駒の枚数。
+    /// 味方の駒の利き  
+    ///
+    /// # Tips
+    ///
+    /// * 敵の駒と自分の駒の利きは別々に保持します。
+    pub control_s: [Kiki; 16 * 11],
+    /// 敵の駒の利き  
+    pub control_e: [Kiki; 16 * 11],
+
+    /// 持ち駒の枚数  
+    ///
+    /// Hand[SFU]が１なら先手の持ち駒に歩が１枚、Hand[EKI]が３なら敵の持ち駒に金が３枚という要領です。  
+    ///
+    /// # Tips
+    ///
+    /// * 王が持ち駒になることはないので、EHIまでで十分です。
     pub hand: [usize; KomaInf::EHI as usize + 1 as usize],
 
-    /// 方向を示す定数。
-    pub direct: [isize; 12],
+    /// この局面の手数です。
+    pub tesu: isize,
+
+    /// 自玉の位置
+    pub king_s: Kiki,
+
+    /// 敵玉の位置
+    pub king_e: Kiki,
 
     /// その方向に動けるか？その方向に飛んで動くものは入れてはいけない。
     pub can_move: [[isize; 64]; 12],
     /// その方向に飛んで動くことが出来るか？
     /// 飛車角香車と龍と馬しかそういう駒はない
     pub can_jump: [[isize; 64]; 12],
-
-    /// 味方の駒の利き
-    pub control_s: [Kiki; 16 * 11],
-    /// 敵の駒の利き
-    pub control_e: [Kiki; 16 * 11],
-    pub king_s: Kiki,
-    pub king_e: Kiki,
 }
 
 // 手のクラス

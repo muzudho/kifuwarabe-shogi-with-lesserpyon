@@ -7,8 +7,12 @@ impl Default for Kyokumen {
         Kyokumen {
             banpadding: [KomaInf::Wall; 16],
             ban: [KomaInf::EMP; 16 * (9 + 2)],
+            control_s: [0; 16 * 11],
+            control_e: [0; 16 * 11],
             hand: [0; KomaInf::EHI as usize + 1 as usize],
-            direct: [17, 1, -15, 16, -16, 15, -1, -17, 14, -18, 18, -14],
+            tesu: 0,
+            king_s: 0,
+            king_e: 0,
             can_move: [
                 // Direct[0]=17,
                 // |／
@@ -503,10 +507,6 @@ impl Default for Kyokumen {
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
             ],
-            control_s: [0; 16 * 11],
-            control_e: [0; 16 * 11],
-            king_s: 0,
-            king_e: 0,
         }
     }
 }
