@@ -1,4 +1,5 @@
 pub mod kyokumen;
+pub mod te;
 
 fn main() {
     println!("Kifuwarabe's shogi with Usapyon");
@@ -15,7 +16,7 @@ pub enum KomaInfo {
     // 成り駒につける目印（１ビット）
     Promoted = 1 << 3,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum KomaInf {
     /// ３文字も準備しておくとソースが見やすいので（笑）
     EMP = 0,
@@ -108,4 +109,22 @@ pub struct Kyokumen {
     pub control_e: [Kiki; 16 * 11],
     pub king_s: Kiki,
     pub king_e: Kiki,
+}
+
+// 手のクラス
+pub struct Te {
+    // どこから・どこへはそれぞれ１Byteであらわせます。
+    // 詳しくは局面クラスを参照して下さい。
+    pub from: u8,
+    pub to: u8,
+    // 動かした駒
+    pub koma: KomaInf,
+    // 取った駒
+    pub capture: KomaInf,
+    // 成/不成り
+    pub promote: u8,
+    // これは、手の生成の際に種別を用いたい時に使います（将来の拡張用）
+    pub kind: u8,
+    // その手の仮評価（手の価値）です
+    pub value: i16,
 }
