@@ -2,7 +2,7 @@
 
 use crate::Kiki;
 use crate::Te;
-use crate::{KomaInf, Kyokumen};
+use crate::{KomaInf, KomaInfo, Kyokumen};
 
 impl Default for Kyokumen {
     fn default() -> Self {
@@ -514,6 +514,34 @@ impl Default for Kyokumen {
 }
 
 impl Kyokumen {
+    pub fn search(&self, mut pos: usize, dir: usize) -> usize {
+        while {
+            pos += dir;
+            self.ban[pos] as isize == KomaInfo::Empty as isize
+        } {}
+        return pos;
+    }
+    // pub Kyokumen() {}
+    // pub Kyokumen(int tesu,KomaInf ban[9][9],int Motigoma[]){}
+    pub fn print() {
+        /*FPrint(stdout);*/
+    }
+    /*
+    pub fn  FPrint(FILE *fp){}
+    */
+    pub fn make_pin_inf(pin: &mut isize) {}
+    pub fn make_legal_moves(
+        s_or_e: isize,
+        tebuf: &mut Te,
+        pin: &mut isize, /* =NULL */
+    ) -> isize {
+        0
+    }
+    pub fn anti_check(s_or_e: isize, tebuf: &mut Te, pin: &mut isize, control: Kiki) -> isize {
+        0
+    }
+    pub fn Move(s_or_e: isize, te: &Te) {}
+
     fn init_control() {}
 
     fn utifudume(s_or_e: isize, to: u8, pin: &mut isize) -> isize {
