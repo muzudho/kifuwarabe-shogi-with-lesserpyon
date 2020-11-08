@@ -1,5 +1,7 @@
 //! 局面の実装。
 
+use crate::Kiki;
+use crate::Te;
 use crate::{KomaInf, Kyokumen};
 
 impl Default for Kyokumen {
@@ -508,5 +510,60 @@ impl Default for Kyokumen {
                 ],
             ],
         }
+    }
+}
+
+impl Kyokumen {
+    fn init_control() {}
+
+    fn utifudume(s_or_e: isize, to: u8, pin: &mut isize) -> isize {
+        0
+    }
+
+    /// 玉の動く手の生成
+    fn move_king(s_or_e: isize, te_num: &mut isize, te_top: &mut Te, kiki: Kiki) {}
+
+    /// toに動く手の生成
+    fn move_to(s_or_e: isize, te_num: &mut isize, te_top: &mut Te, to: u8, pin: &mut isize) {}
+
+    /// toに駒を打つ手の生成
+    fn put_to(s_or_e: isize, te_num: &mut usize, te_top: &Te, to: u8, pin: &mut isize) {}
+    fn count_control_s(pos: isize) -> Kiki {
+        0
+    }
+    fn count_control_e(pos: isize) -> Kiki {
+        0
+    }
+    fn countMove(s_or_e: isize, pos: isize, pin: &mut isize) -> Kiki {
+        0
+    }
+    fn AddMoves(
+        s_or_e: isize,
+        te_num: &mut usize,
+        te_top: &Te,
+        from: u8,
+        pin: isize,
+        r_pin: isize, /* =0 */
+    ) {
+    }
+    fn AddStraight(
+        s_or_e: isize,
+        te_num: &mut usize,
+        te_top: &Te,
+        from: u8,
+        dir: isize,
+        pin: isize,
+        r_pin: isize, /* =0 */
+    ) {
+    }
+    fn AddMove(
+        s_or_e: isize,
+        te_num: &mut usize,
+        te_top: &Te,
+        from: u8,
+        diff: isize,
+        pin: isize,
+        r_pin: isize, /* =0 */
+    ) {
     }
 }
