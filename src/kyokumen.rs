@@ -516,6 +516,24 @@ impl Default for Kyokumen {
     }
 }
 
+/// C++からRustに翻訳するときに 可読性が低くなったところに使うぜ☆（＾～＾）  
+/// きふわらべのお父ん が追加した☆（＾～＾）  
+/// オリジナルの れさぴょん には無いぜ☆（＾～＾）  
+impl Kyokumen {
+    /// Is enemy.
+    pub fn is_e(&self, sq: usize) -> bool {
+        self.ban[sq] & KomaInf::Enemy != KomaInf::EMP
+    }
+    /// Is intersect enemy.
+    pub fn is_control_e(&self, sq: usize) -> bool {
+        self.control_e[sq] != 0
+    }
+    /// Is intersect self.
+    pub fn is_control_s(&self, sq: usize) -> bool {
+        self.control_s[sq] != 0
+    }
+}
+
 impl Kyokumen {
     pub fn search(&self, mut pos: usize, dir: isize) -> usize {
         while {
@@ -544,7 +562,7 @@ impl Kyokumen {
             //自玉が盤面にある時のみ有効
             for i in 0..8 {
                 let p = self.search(self.king_s, DIRECT[i]);
-                if self.ban[p] != KomaInf::Wall && !(self.ban[p] & KomaInf::Enemy) != 0 {
+                if self.ban[p] != KomaInf::Wall && !self.is_e(p) {
                     //味方の駒が有る
                     if (self.control_e[p] & 1 << (16 + i)) != 0 {
                         pin[p] = DIRECT[i];
@@ -557,7 +575,7 @@ impl Kyokumen {
 
             for i in 0..8 {
                 let p = self.search(self.king_e, -DIRECT[i]);
-                if (self.ban[p] != KomaInf::Wall) && (self.ban[p] & KomaInf::Enemy) != 0 {
+                if (self.ban[p] != KomaInf::Wall) && self.is_e(p) {
                     //敵の駒が有る
                     if (self.control_s[p] & 1 << (16 + i)) != 0 {
                         pin[p] = DIRECT[i];
@@ -579,10 +597,10 @@ impl Kyokumen {
             self.make_pin_inf(&mut pbuf);
             pin = Some(&mut pbuf);
         }
-        if s_or_e == KomaInf::Self_ && self.control_e[self.king_s] != 0 {
+        if s_or_e == KomaInf::Self_ && self.is_control_e(self.king_s) {
             return self.anti_check(s_or_e, te_buf, pin, self.control_e[self.king_s]);
         }
-        if s_or_e == KomaInf::Enemy && self.control_s[self.king_e] != 0 {
+        if s_or_e == KomaInf::Enemy && self.is_control_s(self.king_e) {
             return self.anti_check(s_or_e, te_buf, pin, self.control_s[self.king_e]);
         }
 
@@ -604,11 +622,9 @@ impl Kyokumen {
                 // 二歩チェック
                 let nifu = false;
                 for dan in 1..=9 {
-                    if let Some(koma_inf) = KomaInf::from_isize(s_or_e | KomaInf::FU) {
-                        if self.ban[suji + dan] == koma_inf {
-                            nifu = true;
-                            break;
-                        }
+                    if self.ban[suji + dan] == s_or_e | KomaInf::FU {
+                        nifu = true;
+                        break;
                     }
                 }
                 if nifu {
@@ -630,7 +646,7 @@ impl Kyokumen {
                         te_buf[te_num as usize] = Te::from_4(
                             0,
                             (suji + dan as usize) as u8,
-                            KomaInf::from_isize(s_or_e | KomaInf::FU).unwrap(),
+                            s_or_e | KomaInf::FU,
                             KomaInf::EMP,
                         );
                         te_num += 1;
@@ -651,12 +667,8 @@ impl Kyokumen {
                 }
                 for dan in start_dan..=end_dan {
                     if self.ban[(dan + suji) as usize] == KomaInf::EMP {
-                        te_buf[te_num as usize] = Te::from_4(
-                            0,
-                            (suji + dan) as u8,
-                            KomaInf::from_isize(s_or_e | KomaInf::KY).unwrap(),
-                            KomaInf::EMP,
-                        );
+                        te_buf[te_num as usize] =
+                            Te::from_4(0, (suji + dan) as u8, s_or_e | KomaInf::KY, KomaInf::EMP);
                         te_num += 1;
                     }
                 }
@@ -675,12 +687,8 @@ impl Kyokumen {
                 }
                 for dan in start_dan..=end_dan {
                     if self.ban[(dan + suji) as usize] == KomaInf::EMP {
-                        te_buf[te_num as usize] = Te::from_4(
-                            0,
-                            (suji + dan) as u8,
-                            KomaInf::from_isize(s_or_e | KomaInf::KE).unwrap(),
-                            KomaInf::EMP,
-                        );
+                        te_buf[te_num as usize] =
+                            Te::from_4(0, (suji + dan) as u8, s_or_e | KomaInf::KE, KomaInf::EMP);
                         te_num += 1;
                     }
                 }
