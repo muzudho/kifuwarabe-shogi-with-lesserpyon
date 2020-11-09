@@ -9,10 +9,13 @@ use num_derive::FromPrimitive;
 // use num_traits::FromPrimitive;
 
 fn main() {
-    println!("Kifuwarabe's shogi with Usapyon");
+    println!("Kifuwarabe's shogi with Lesserpyon");
 
     let _kyokumen = Kyokumen::default();
 }
+
+/// うさぴょんは 可変長の teBuf を使っていたが、とりあえず固定長にしようぜ☆（＾～＾）？
+const TE_LEN: usize = 512;
 
 /// Empty=0,
 /// EMP=0,

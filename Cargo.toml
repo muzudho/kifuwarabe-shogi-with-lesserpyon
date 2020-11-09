@@ -1,5 +1,5 @@
 [package]
-name = "kifuwarabe_shogi_with_usapyon"
+name = "kifuwarabe_shogi_with_lesserpyon"
 version = "0.1.0"
 authors = ["むずでょ <muzudho1@gmail.com>"]
 edition = "2018"

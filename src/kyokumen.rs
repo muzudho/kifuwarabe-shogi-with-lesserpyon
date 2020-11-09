@@ -3,6 +3,7 @@
 use crate::Kiki;
 use crate::Te;
 use crate::DIRECT;
+use crate::TE_LEN;
 use crate::{KomaInf, KomaInfo, Kyokumen};
 use num_traits::FromPrimitive;
 
@@ -569,7 +570,7 @@ impl Kyokumen {
     pub fn make_legal_moves(
         &self,
         s_or_e: KomaInf,
-        te_buf: &mut Te,
+        te_buf: &mut [Te; TE_LEN],
         pin: Option<&mut [isize; 16 * 11]>, /* =NULL */
     ) -> isize {
         let mut pbuf: [isize; 16 * 11] = [0; 16 * 11];
@@ -638,7 +639,7 @@ impl Kyokumen {
             }
         }
         // 香を打つ
-        if self.hand[s_or_e | KomaInf::KY] > 0 {
+        if self.hand[(s_or_e | KomaInf::KY) as usize] > 0 {
             for suji in (0x10..=0x90).step_by(0x10) {
                 //(先手なら２段目より下に、後手なら８段目より上に打つ）
                 if s_or_e == KomaInf::Self_ {
@@ -662,7 +663,7 @@ impl Kyokumen {
             }
         }
         //桂を打つ
-        if self.hand[s_or_e | KomaInf::KE] > 0 {
+        if self.hand[(s_or_e | KomaInf::KE) as usize] > 0 {
             //(先手なら３段目より下に、後手なら７段目より上に打つ）
             for suji in (0x10..=0x90).step_by(0x10) {
                 if s_or_e == KomaInf::Self_ {
@@ -713,7 +714,7 @@ impl Kyokumen {
     pub fn anti_check(
         &self,
         s_or_e: KomaInf,
-        tebuf: &mut Te,
+        tebuf: &mut [Te; TE_LEN],
         pin: Option<&mut [isize; 16 * 11]>,
         control: Kiki,
     ) -> isize {
