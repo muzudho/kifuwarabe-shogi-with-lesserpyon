@@ -14,6 +14,9 @@ fn main() {
     let _kyokumen = Kyokumen::default();
 }
 
+/// 盤のデータの持ち方☆（＾～＾） パディングの説明とか どっかで読んどけだぜ☆（＾～＾）
+const BAN_LEN: usize = 16 * (9 + 2);
+
 /// C++ の れさぴょん は 手の配列の先頭アドレスを指す teBuf を使っていたが、
 /// Rust で可変長を使うとだいぶ別物なんで、 とりあえず固定長の配列にしようぜ☆（＾～＾）？
 const TE_LEN: usize = 512;

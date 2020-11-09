@@ -3,6 +3,7 @@
 use crate::Kiki;
 use crate::Pin;
 use crate::Te;
+use crate::BAN_LEN;
 use crate::DIRECT;
 use crate::TE_LEN;
 use crate::{KomaInf, KomaInfo, Kyokumen};
@@ -12,9 +13,9 @@ impl Default for Kyokumen {
     fn default() -> Self {
         Kyokumen {
             banpadding: [KomaInf::Wall; 16],
-            ban: [KomaInf::EMP; 16 * (9 + 2)],
-            control_s: [0; 16 * 11],
-            control_e: [0; 16 * 11],
+            ban: [KomaInf::EMP; BAN_LEN],
+            control_s: [0; BAN_LEN],
+            control_e: [0; BAN_LEN],
             hand: [0; KomaInf::EHI as usize + 1 as usize],
             tesu: 0,
             king_s: 0,
@@ -560,7 +561,7 @@ impl Kyokumen {
     pub fn  FPrint(FILE *fp){}
     */
     /// ピン（動かすと王を取られてしまうので動きが制限される駒）の状態を設定する
-    pub fn make_pin_inf(&self, pin: &mut [isize; 16 * 11]) {
+    pub fn make_pin_inf(&self, pin: &mut [isize; BAN_LEN]) {
         // int i;
         // ピン情報を設定する
         for sq in 0x11..=0x99 {
@@ -603,15 +604,16 @@ impl Kyokumen {
         &self,
         s_or_e: KomaInf,
         te_buf: &mut [Te; TE_LEN],
-        pin: Option<&mut [isize; 16 * 11]>, /* =NULL */
+        pin: Option<&mut [isize; BAN_LEN]>, /* =NULL */
     ) -> usize {
-        let mut pbuf: [isize; 16 * 11] = [0; 16 * 11];
         let mut te_num = 0;
-        if let None = pin {
+        let pin = if let None = pin {
+            let mut pbuf: [isize; BAN_LEN] = [0; BAN_LEN];
             self.make_pin_inf(&mut pbuf);
-            pin = Some(&mut pbuf);
-        }
-        let pin = pin.unwrap();
+            pbuf
+        } else {
+            pin.unwrap()
+        };
 
         if s_or_e == KomaInf::Self_ && self.is_control_e(self.king_s) {
             return self.anti_check(s_or_e, te_buf, pin, self.control_e[self.king_s]);
