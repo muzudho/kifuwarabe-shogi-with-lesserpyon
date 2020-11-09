@@ -1,14 +1,15 @@
 //! 局面の実装。
 
-use crate::isquare;
-use crate::usquare;
+use crate::ISquare;
 use crate::Kiki;
 use crate::Pin;
 use crate::Te;
+use crate::TeNum;
+use crate::USquare;
 use crate::BAN_LEN;
 use crate::DIRECT;
 use crate::TE_LEN;
-use crate::{KomaInf, KomaInfo, Kyokumen};
+use crate::{KomaInf, Kyokumen};
 use num_traits::FromPrimitive;
 
 impl Default for Kyokumen {
@@ -525,31 +526,31 @@ impl Default for Kyokumen {
 /// オリジナルの れさぴょん には無いぜ☆（＾～＾）  
 impl Kyokumen {
     /// Is enemy.
-    pub fn is_e(&self, sq: usquare) -> bool {
+    pub fn is_e(&self, sq: USquare) -> bool {
         self.ban[sq] & KomaInf::Enemy != KomaInf::EMP
     }
     /// Is intersect enemy.
-    pub fn is_control_e(&self, sq: usquare) -> bool {
+    pub fn is_control_e(&self, sq: USquare) -> bool {
         self.control_e[sq] != 0
     }
     /// Is intersect self.
-    pub fn is_control_s(&self, sq: usquare) -> bool {
+    pub fn is_control_s(&self, sq: USquare) -> bool {
         self.control_s[sq] != 0
     }
     /// Exists.
-    pub fn is_exists(&self, sq: usquare) -> bool {
+    pub fn is_exists(&self, sq: USquare) -> bool {
         self.ban[sq] != KomaInf::EMP
     }
     /// Exists.
-    pub fn is_exists_s_or_e(&self, sq: usquare, s_or_e: KomaInf) -> bool {
+    pub fn is_exists_s_or_e(&self, sq: USquare, s_or_e: KomaInf) -> bool {
         self.ban[sq] & s_or_e != KomaInf::EMP
     }
 }
 
 impl Kyokumen {
-    pub fn search(&self, mut sq: usquare, dir: isquare) -> usquare {
+    pub fn search(&self, mut sq: USquare, dir: ISquare) -> USquare {
         while {
-            sq = (sq as isquare + dir) as usquare;
+            sq = (sq as ISquare + dir) as USquare;
             !self.is_exists(sq)
         } {}
         return sq;
@@ -563,7 +564,7 @@ impl Kyokumen {
     pub fn  FPrint(FILE *fp){}
     */
     /// ピン（動かすと王を取られてしまうので動きが制限される駒）の状態を設定する
-    pub fn make_pin_inf(&self, pin: &mut [isize; BAN_LEN]) {
+    pub fn make_pin_inf(&self, pin: &mut Pin) {
         // int i;
         // ピン情報を設定する
         for sq in 0x11..=0x99 {
@@ -606,7 +607,7 @@ impl Kyokumen {
         &self,
         s_or_e: KomaInf,
         te_buf: &mut [Te; TE_LEN],
-        pin: &mut Option<[isize; BAN_LEN]>, /* =NULL */
+        pin: &mut Option<Pin>, /* =NULL */
     ) -> usize {
         let mut te_num = 0;
         let pin = if let None = pin {
@@ -636,7 +637,7 @@ impl Kyokumen {
                         s_or_e,
                         &mut te_num,
                         te_buf,
-                        (suji + dan) as u8,
+                        (suji + dan) as USquare,
                         pin[suji + dan],
                         0, // rpin
                     );
@@ -668,7 +669,7 @@ impl Kyokumen {
                 for dan in start_dan..=end_dan {
                     // 打ち歩詰めもチェック
                     if !self.is_exists(dan as usize + suji)
-                        && !self.utifudume(s_or_e, (dan as usize + suji) as u8, &pin)
+                        && !self.utifudume(s_or_e, (dan as usize + suji) as USquare, &pin)
                     {
                         te_buf[te_num as usize] = Te::from_4(
                             0,
@@ -765,78 +766,108 @@ impl Kyokumen {
         pin: &Pin,
         kiki: Kiki,
     ) -> usize {
-        let king:usquare;
-        let te_num=0;
-        if (kiki & (kiki-1))!=0 {
-          //両王手は玉を動かすしかない
-          self.move_king(s_or_e,te_num, te_buf, kiki);
+        let king: USquare;
+        let mut te_num: TeNum = 0;
+        if (kiki & (kiki - 1)) != 0 {
+            //両王手は玉を動かすしかない
+            self.move_king(s_or_e, &mut te_num, te_buf, kiki);
         } else {
-          if s_or_e==KomaInf::Self_ {
-            king=self.king_s;
-          } else {
-            king=self.king_e;
-          }
-          let id:usize;
-          let check:usquare;
-          for id in 0..= 31{
-            if kiki == (1usize << id){ break;}
-          }
-          if id < 16 {
-            check = king as isquare - DIRECT[id];
-          } else {
-            check = self.search(king,-DIRECT[id-16]);
-          }
-          //王手駒を取る
-          self.move_to(s_or_e,te_num, te_buf, check, pin);
-          
-          //玉を動かす
-          self.move_king(s_or_e,te_num, te_buf, kiki);
-      
-          if id >= 16 {
-            //合駒をする手を生成する
-            let i:usize;
-            for (i = king - DIRECT[id-16]; ban[i] == EMPTY; i -= DIRECT[id-16]) {
-              self.move_to(s_or_e,te_num, te_buf, i, pin); //移動合
+            if s_or_e == KomaInf::Self_ {
+                king = self.king_s;
+            } else {
+                king = self.king_e;
             }
-            for (i = king - DIRECT[id-16]; ban[i] == EMPTY; i -= DIRECT[id-16]) {
-              self.put_to(s_or_e,te_num, te_buf, i, pin);  //駒を打つ合
-            t}
-          } 
+            let check: USquare;
+            let mut id: usize = 0;
+            while id <= 31 {
+                if kiki == (1usize << id) {
+                    break;
+                }
+                id += 1;
+            }
+            if id < 16 {
+                check = (king as ISquare - DIRECT[id]) as USquare;
+            } else {
+                check = self.search(king, -DIRECT[id - 16]);
+            }
+            //王手駒を取る
+            self.move_to(s_or_e, &mut te_num, te_buf, check, pin);
+
+            //玉を動かす
+            self.move_king(s_or_e, &mut te_num, te_buf, kiki);
+
+            if id >= 16 {
+                //合駒をする手を生成する
+                let mut i: USquare = (king as ISquare - DIRECT[id - 16]) as USquare;
+                while !self.is_exists(i) {
+                    self.move_to(s_or_e, &mut te_num, te_buf, i, pin); //移動合
+                    i = (i as ISquare - DIRECT[id - 16]) as USquare;
+                }
+                let mut i: USquare = (king as ISquare - DIRECT[id - 16]) as USquare;
+                while !self.is_exists(i) {
+                    self.put_to(s_or_e, &mut te_num, te_buf, i, pin); //駒を打つ合
+                    i = (i as ISquare - DIRECT[id - 16]) as USquare;
+                }
+            }
         }
-        return te_num;    }
+        return te_num;
+    }
 
     /// TODO
-    pub fn move(s_or_e: KomaInf, te: &Te) {}
+    pub fn move_(s_or_e: KomaInf, te: &Te) {}
 
     /// TODO
     fn init_control() {}
 
     /// TODO
-    fn utifudume(&self, s_or_e: KomaInf, to: u8, pin: &Pin) -> bool {
+    fn utifudume(&self, s_or_e: KomaInf, to: USquare, pin: &Pin) -> bool {
         false
     }
 
     /// TODO 玉の動く手の生成
-    fn move_king(&self,s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, kiki: Kiki) {}
+    fn move_king(
+        &self,
+        s_or_e: KomaInf,
+        te_num: &mut TeNum,
+        te_top: &mut [Te; TE_LEN],
+        kiki: Kiki,
+    ) {
+    }
 
     /// TODO toに動く手の生成
-    fn move_to(&self,s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, to: u8, pin: &mut isize) {}
+    fn move_to(
+        &self,
+        s_or_e: KomaInf,
+        te_num: &mut TeNum,
+        te_top: &mut [Te; TE_LEN],
+        to: USquare,
+        pin: &Pin,
+    ) {
+    }
 
     /// TODO toに駒を打つ手の生成
-    fn put_to(&self,s_or_e: KomaInf, te_num: &mut usize, te_top: &Te, to: u8, pin: &mut isize) {}
+    fn put_to(
+        &self,
+        s_or_e: KomaInf,
+        te_num: &mut TeNum,
+        te_top: &[Te; TE_LEN],
+        to: USquare,
+        pin: &Pin,
+    ) {
+    }
 
     /// TODO
-    fn count_control_s(pos: isize) -> Kiki {
+    fn count_control_s(sq: ISquare) -> Kiki {
         0
     }
 
     /// TODO
-    fn count_control_e(pos: isize) -> Kiki {
+    fn count_control_e(sq: ISquare) -> Kiki {
         0
     }
 
     /// TODO
-    fn countMove(s_or_e: KomaInf, pos: isize, pin: &Pin) -> Kiki {
+    fn countMove(s_or_e: KomaInf, sq: ISquare, pin: &Pin) -> Kiki {
         0
     }
 
@@ -844,35 +875,35 @@ impl Kyokumen {
     fn add_moves(
         &self,
         s_or_e: KomaInf,
-        te_num: &mut usize,
+        te_num: &mut TeNum,
         te_top: &mut [Te; TE_LEN],
-        from: u8,
-        pin: isize,
-        r_pin: isize, /* =0 */
+        from: USquare,
+        pin: ISquare,
+        r_pin: ISquare, /* =0 */
     ) {
     }
 
     /// TODO
     fn AddStraight(
         s_or_e: KomaInf,
-        te_num: &mut usize,
+        te_num: &mut TeNum,
         te_top: &Te,
-        from: u8,
-        dir: isize,
-        pin: isize,
-        r_pin: isize, /* =0 */
+        from: USquare,
+        dir: ISquare,
+        pin: ISquare,
+        r_pin: ISquare, /* =0 */
     ) {
     }
 
     /// TODO
     fn AddMove(
         s_or_e: KomaInf,
-        te_num: &mut usize,
+        te_num: &mut TeNum,
         te_top: &Te,
-        from: u8,
+        from: USquare,
         diff: isize,
-        pin: isize,
-        r_pin: isize, /* =0 */
+        pin: ISquare,
+        r_pin: ISquare, /* =0 */
     ) {
     }
 }

@@ -14,12 +14,15 @@ fn main() {
     let _kyokumen = Kyokumen::default();
 }
 
-/// れさぴょん には無いけど、盤のマス番地は明示しとこうぜ☆（＾～＾）
-type usquare = usize;
-type isquare = isize;
+/// れさぴょん はしてないけど、盤のマス番地の型は明示しとこうぜ☆（＾～＾）
+type USquare = usize;
+type ISquare = isize;
 
 /// 盤のデータの持ち方☆（＾～＾） パディングの説明とか どっかで読んどけだぜ☆（＾～＾）
 const BAN_LEN: usize = 16 * (9 + 2);
+
+/// れさぴょん はしてないけど、手目の型は明示しとこうぜ☆（＾～＾）
+type TeNum = usize;
 
 /// C++ の れさぴょん は 手の配列の先頭アドレスを指す teBuf を使っていたが、
 /// Rust で可変長を使うとだいぶ別物なんで、 とりあえず固定長の配列にしようぜ☆（＾～＾）？
@@ -27,9 +30,11 @@ const TE_LEN: usize = 512;
 
 /// Pin.
 ///
+/// 玉と敵駒の間にある合い駒は、ピンしている敵駒の方向を覚えておくぜ☆（＾～＾）
+///
 /// C++ は配列のサイズを指定しなくても ポインターで先頭アドレス指すだけでいいんだが、
 /// Rust はそうもいかないんで サイズを指定できるようにしておこうぜ☆（＾～＾）？
-type Pin = [isize; 16 * 11];
+type Pin = [ISquare; BAN_LEN];
 
 /// Empty=0,
 /// EMP=0,
@@ -101,10 +106,10 @@ pub enum KomaInf {
 }
 
 /// 方向を示す定数。
-const DIRECT: [isquare; 12] = [17, 1, -15, 16, -16, 15, -1, -17, 14, -18, 18, -14];
+const DIRECT: [ISquare; 12] = [17, 1, -15, 16, -16, 15, -1, -17, 14, -18, 18, -14];
 
 /// 利き。
-type Kiki = usquare;
+type Kiki = USquare;
 
 /// 局面。
 pub struct Kyokumen {
@@ -150,7 +155,7 @@ pub struct Kyokumen {
     pub hand: [usize; KomaInf::EHI as usize + 1 as usize],
 
     /// この局面の手数です。
-    pub tesu: isize,
+    pub tesu: TeNum,
 
     /// 自玉の位置
     pub king_s: Kiki,
