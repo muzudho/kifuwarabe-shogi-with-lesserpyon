@@ -895,8 +895,26 @@ impl Kyokumen {
     }
 
     /// TODO
-    fn count_control_e(sq: ISquare) -> Kiki {
-        0
+    fn count_control_e(&self, sq: ISquare) -> Kiki {
+        let mut ret: Kiki = 0;
+        let mut dir = 0;
+        let mut b = 1;
+        let mut bj = 1 << 16;
+
+        while dir < 12 {
+            if self.can_move(dir, sq) && self.is_e((sq - DIRECT[dir]) as USquare) {
+                ret |= b;
+            } else {
+                let sq2 = self.search(sq as USquare, -DIRECT[dir]);
+                if self.can_jump(dir, sq2) && self.is_e(sq as USquare) {
+                    ret |= bj;
+                }
+            }
+            dir += 1;
+            b <<= 1;
+            bj <<= 1;
+        }
+        return ret;
     }
 
     /// TODO
