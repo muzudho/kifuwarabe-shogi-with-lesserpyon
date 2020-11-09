@@ -525,6 +525,10 @@ impl Default for Kyokumen {
 /// きふわらべのお父ん が追加した☆（＾～＾）  
 /// オリジナルの れさぴょん には無いぜ☆（＾～＾）  
 impl Kyokumen {
+    /// Is self.
+    pub fn is_s(&self, sq: USquare) -> bool {
+        self.ban[sq] & KomaInf::Self_ != KomaInf::EMP
+    }
     /// Is enemy.
     pub fn is_e(&self, sq: USquare) -> bool {
         self.ban[sq] & KomaInf::Enemy != KomaInf::EMP
@@ -544,6 +548,16 @@ impl Kyokumen {
     /// Exists.
     pub fn is_exists_s_or_e(&self, sq: USquare, s_or_e: KomaInf) -> bool {
         self.ban[sq] & s_or_e != KomaInf::EMP
+    }
+    /// # Parameters
+    ///
+    /// * `dir` - Direction.
+    /// * `sq` - Square.
+    pub fn can_move(&self, dir: usize, sq: ISquare) -> bool {
+        self.can_move[dir][self.ban[(sq - DIRECT[dir]) as usize] as usize] != 0
+    }
+    pub fn can_jump(&self, dir: usize, sq: USquare) -> bool {
+        self.can_jump[dir][self.ban[sq] as usize] != 0
     }
 }
 
@@ -856,9 +870,28 @@ impl Kyokumen {
     ) {
     }
 
-    /// TODO
-    fn count_control_s(sq: ISquare) -> Kiki {
-        0
+    /// TODO ある場所の利き情報を作成して返す。普段は使わない関数（差分計算しているから）だが、
+    /// 打ち歩詰めのチェックなど、駒を仮に置いてみて何かするようなときに使用する。
+    fn count_control_s(&self, sq: ISquare) -> Kiki {
+        let mut ret: Kiki = 0;
+        let mut dir = 0;
+        let mut b = 1;
+        let mut bj = 1 << 16;
+
+        while dir < 12 {
+            if self.can_move(dir, sq) && self.is_s((sq - DIRECT[dir]) as usize) {
+                ret |= b;
+            } else if self.can_jump(dir, self.search(sq as USquare, -DIRECT[dir])) {
+                let sq2 = self.search(sq as USquare, -DIRECT[dir]) as usize;
+                if self.is_s(sq2) {
+                    ret |= bj;
+                }
+            }
+            dir += 1;
+            b <<= 1;
+            bj <<= 1;
+        }
+        return ret;
     }
 
     /// TODO
