@@ -604,7 +604,7 @@ impl Kyokumen {
         &self,
         s_or_e: KomaInf,
         te_buf: &mut [Te; TE_LEN],
-        pin: Option<&mut [isize; BAN_LEN]>, /* =NULL */
+        pin: &mut Option<[isize; BAN_LEN]>, /* =NULL */
     ) -> usize {
         let mut te_num = 0;
         let pin = if let None = pin {
@@ -616,10 +616,10 @@ impl Kyokumen {
         };
 
         if s_or_e == KomaInf::Self_ && self.is_control_e(self.king_s) {
-            return self.anti_check(s_or_e, te_buf, pin, self.control_e[self.king_s]);
+            return self.anti_check(s_or_e, te_buf, &pin, self.control_e[self.king_s]);
         }
         if s_or_e == KomaInf::Enemy && self.is_control_s(self.king_e) {
-            return self.anti_check(s_or_e, te_buf, pin, self.control_s[self.king_e]);
+            return self.anti_check(s_or_e, te_buf, &pin, self.control_s[self.king_e]);
         }
 
         // let suji: isize;
@@ -666,7 +666,7 @@ impl Kyokumen {
                 for dan in start_dan..=end_dan {
                     // 打ち歩詰めもチェック
                     if !self.is_exists(dan as usize + suji)
-                        && !self.utifudume(s_or_e, (dan as usize + suji) as u8, pin)
+                        && !self.utifudume(s_or_e, (dan as usize + suji) as u8, &pin)
                     {
                         te_buf[te_num as usize] = Te::from_4(
                             0,
