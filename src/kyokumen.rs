@@ -1,6 +1,7 @@
 //! 局面の実装。
 
 use crate::Kiki;
+use crate::Pin;
 use crate::Te;
 use crate::DIRECT;
 use crate::TE_LEN;
@@ -532,6 +533,14 @@ impl Kyokumen {
     pub fn is_control_s(&self, sq: usize) -> bool {
         self.control_s[sq] != 0
     }
+    /// Exists.
+    pub fn is_exists(&self, sq: usize) -> bool {
+        self.ban[sq] != KomaInf::EMP
+    }
+    /// Exists.
+    pub fn is_exists_s_or_e(&self, sq: usize, s_or_e: KomaInf) -> bool {
+        self.ban[sq] & s_or_e != KomaInf::EMP
+    }
 }
 
 impl Kyokumen {
@@ -584,19 +593,26 @@ impl Kyokumen {
             }
         }
     }
+
     /// 駒の動きとして正しい動きを全て生成する。
+    ///
+    /// # Return
+    ///
+    /// * `usize` - 手目。
     pub fn make_legal_moves(
         &self,
         s_or_e: KomaInf,
         te_buf: &mut [Te; TE_LEN],
         pin: Option<&mut [isize; 16 * 11]>, /* =NULL */
-    ) -> isize {
+    ) -> usize {
         let mut pbuf: [isize; 16 * 11] = [0; 16 * 11];
-        let te_num = 0;
+        let mut te_num = 0;
         if let None = pin {
             self.make_pin_inf(&mut pbuf);
             pin = Some(&mut pbuf);
         }
+        let pin = pin.unwrap();
+
         if s_or_e == KomaInf::Self_ && self.is_control_e(self.king_s) {
             return self.anti_check(s_or_e, te_buf, pin, self.control_e[self.king_s]);
         }
@@ -604,15 +620,22 @@ impl Kyokumen {
             return self.anti_check(s_or_e, te_buf, pin, self.control_s[self.king_e]);
         }
 
-        let suji: isize;
-        let dan: isize;
-        let start_dan: isize;
-        let end_dan: isize;
+        // let suji: isize;
+        // let dan: isize;
+        let mut start_dan: usize;
+        let mut end_dan: usize;
         // 盤上の駒を動かす
         for suji in (0x10..=0x90).step_by(0x10) {
             for dan in 1..=9 {
-                if (self.ban[suji + dan] & s_or_e) != 0 {
-                    self.add_moves(s_or_e, te_num, te_buf, suji + dan, pin[suji + dan]);
+                if self.is_exists_s_or_e(suji + dan, s_or_e) {
+                    self.add_moves(
+                        s_or_e,
+                        &mut te_num,
+                        te_buf,
+                        (suji + dan) as u8,
+                        pin[suji + dan],
+                        0, // rpin
+                    );
                 }
             }
         }
@@ -620,7 +643,7 @@ impl Kyokumen {
         if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 {
             for suji in (0x10..=0x90).step_by(0x10) {
                 // 二歩チェック
-                let nifu = false;
+                let mut nifu = false;
                 for dan in 1..=9 {
                     if self.ban[suji + dan] == s_or_e | KomaInf::FU {
                         nifu = true;
@@ -640,7 +663,7 @@ impl Kyokumen {
                 }
                 for dan in start_dan..=end_dan {
                     // 打ち歩詰めもチェック
-                    if self.ban[(dan + suji as isize) as usize] == KomaInf::EMP
+                    if !self.is_exists(dan as usize + suji)
                         && !self.utifudume(s_or_e, (dan as usize + suji) as u8, pin)
                     {
                         te_buf[te_num as usize] = Te::from_4(
@@ -666,9 +689,13 @@ impl Kyokumen {
                     end_dan = 8;
                 }
                 for dan in start_dan..=end_dan {
-                    if self.ban[(dan + suji) as usize] == KomaInf::EMP {
-                        te_buf[te_num as usize] =
-                            Te::from_4(0, (suji + dan) as u8, s_or_e | KomaInf::KY, KomaInf::EMP);
+                    if !self.is_exists(dan as usize + suji) {
+                        te_buf[te_num as usize] = Te::from_4(
+                            0,
+                            (suji + dan as usize) as u8,
+                            s_or_e | KomaInf::KY,
+                            KomaInf::EMP,
+                        );
                         te_num += 1;
                     }
                 }
@@ -686,9 +713,13 @@ impl Kyokumen {
                     end_dan = 7;
                 }
                 for dan in start_dan..=end_dan {
-                    if self.ban[(dan + suji) as usize] == KomaInf::EMP {
-                        te_buf[te_num as usize] =
-                            Te::from_4(0, (suji + dan) as u8, s_or_e | KomaInf::KE, KomaInf::EMP);
+                    if !self.is_exists(dan as usize + suji) {
+                        te_buf[te_num as usize] = Te::from_4(
+                            0,
+                            (suji + dan as usize) as u8,
+                            s_or_e | KomaInf::KE,
+                            KomaInf::EMP,
+                        );
                         te_num += 1;
                     }
                 }
@@ -700,7 +731,7 @@ impl Kyokumen {
                 if self.hand[(s_or_e | koma_inf) as usize] > 0 {
                     for suji in (0x10..=0x90).step_by(0x10) {
                         for dan in 1..=9 {
-                            if self.ban[dan + suji] == KomaInf::EMP {
+                            if !self.is_exists(dan + suji) {
                                 te_buf[te_num] = Te::from_4(
                                     0,
                                     (suji + dan) as u8,
@@ -718,14 +749,18 @@ impl Kyokumen {
         return te_num;
     }
 
-    /// TODO
+    /// TODO 王手を受ける手の生成
+    ///
+    /// # Return
+    ///
+    /// * `usize` - 手目。
     pub fn anti_check(
         &self,
         s_or_e: KomaInf,
-        tebuf: &mut [Te; TE_LEN],
-        pin: Option<&mut [isize; 16 * 11]>,
+        te_buf: &mut [Te; TE_LEN],
+        pin: &Pin,
         control: Kiki,
-    ) -> isize {
+    ) -> usize {
         0
     }
 
@@ -736,7 +771,7 @@ impl Kyokumen {
     fn init_control() {}
 
     /// TODO
-    fn utifudume(&self, s_or_e: KomaInf, to: u8, pin: &mut isize) -> bool {
+    fn utifudume(&self, s_or_e: KomaInf, to: u8, pin: &Pin) -> bool {
         false
     }
 
@@ -760,15 +795,16 @@ impl Kyokumen {
     }
 
     /// TODO
-    fn countMove(s_or_e: KomaInf, pos: isize, pin: &mut isize) -> Kiki {
+    fn countMove(s_or_e: KomaInf, pos: isize, pin: &Pin) -> Kiki {
         0
     }
 
     /// TODO
     fn add_moves(
+        &self,
         s_or_e: KomaInf,
         te_num: &mut usize,
-        te_top: &Te,
+        te_top: &mut [Te; TE_LEN],
         from: u8,
         pin: isize,
         r_pin: isize, /* =0 */
