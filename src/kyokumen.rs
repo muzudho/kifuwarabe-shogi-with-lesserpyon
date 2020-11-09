@@ -917,9 +917,41 @@ impl Kyokumen {
         return ret;
     }
 
-    /// TODO
-    fn countMove(s_or_e: KomaInf, sq: ISquare, pin: &Pin) -> Kiki {
-        0
+    /// TODO ある場所に移動できる駒を全部集めて、Kiki情報にして返す。
+    /// このとき、pinされている駒はpinの方向にしか動けない。
+    fn countMove(&self, s_or_e: KomaInf, sq: ISquare, pin: &Pin) -> Kiki {
+        let mut ret: Kiki = 0;
+        let mut dir = 0;
+        let mut b = 1;
+        let mut bj = 1 << 16;
+
+        while dir < 12 {
+            if self.can_move(dir, sq)
+                && self.is_e((sq - DIRECT[dir]) as USquare)
+                && (pin[(sq - DIRECT[dir]) as usize] == 0
+                    || pin[(sq - DIRECT[dir]) as usize] == DIRECT[dir]
+                    || pin[(sq - DIRECT[dir]) as usize] == -DIRECT[dir])
+            {
+                ret |= b;
+            } else {
+                let sq2 = self.search(sq as USquare, -DIRECT[dir]);
+                if self.can_jump(dir, sq2) {
+                    let sq3 = self.search(sq as USquare, -DIRECT[dir]);
+                    if self.is_e(sq3) {
+                        if pin[self.search(sq as USquare, -DIRECT[dir])] == 0
+                            || pin[self.search(sq as USquare, -DIRECT[dir])] == DIRECT[dir]
+                            || pin[self.search(sq as USquare, -DIRECT[dir])] == -DIRECT[dir]
+                        {
+                            ret |= bj;
+                        }
+                    }
+                }
+            }
+            dir += 1;
+            b <<= 1;
+            bj <<= 1;
+        }
+        return ret;
     }
 
     /// TODO 盤面のfromにある駒を動かす手を生成する。
