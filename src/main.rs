@@ -1,3 +1,4 @@
+pub mod koma_inf;
 pub mod kyokumen;
 pub mod te;
 

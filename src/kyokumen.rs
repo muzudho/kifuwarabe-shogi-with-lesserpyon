@@ -2,7 +2,10 @@
 
 use crate::Kiki;
 use crate::Te;
+use crate::DIRECT;
 use crate::{KomaInf, KomaInfo, Kyokumen};
+
+use std::ops::BitAnd;
 
 impl Default for Kyokumen {
     fn default() -> Self {
@@ -514,9 +517,9 @@ impl Default for Kyokumen {
 }
 
 impl Kyokumen {
-    pub fn search(&self, mut pos: usize, dir: usize) -> usize {
+    pub fn search(&self, mut pos: usize, dir: isize) -> usize {
         while {
-            pos += dir;
+            pos = (pos as isize + dir) as usize;
             self.ban[pos] as isize == KomaInfo::Empty as isize
         } {}
         return pos;
@@ -529,7 +532,40 @@ impl Kyokumen {
     /*
     pub fn  FPrint(FILE *fp){}
     */
-    pub fn make_pin_inf(pin: &mut isize) {}
+    /// ピン（動かすと王を取られてしまうので動きが制限される駒）の状態を設定する
+    pub fn make_pin_inf(&mut self, pin: &mut [isize; 0x99]) {
+        // int i;
+        // ピン情報を設定する
+        for sq in 0x11..=0x99 {
+            // 0はピンされていない、という意味
+            pin[sq] = 0;
+        }
+        if self.king_s != 0 {
+            //自玉が盤面にある時のみ有効
+            for i in 0..8 {
+                let p = self.search(self.king_s, DIRECT[i]);
+                if self.ban[p] != KomaInf::Wall && !(self.ban[p] & KomaInf::Enemy) != 0 {
+                    //味方の駒が有る
+                    if (self.control_e[p] & 1 << (16 + i)) != 0 {
+                        pin[p] = DIRECT[i];
+                    }
+                }
+            }
+        }
+        if self.king_e != 0 {
+            //敵玉が盤面にある時のみ有効
+
+            for i in 0..8 {
+                let p = self.search(self.king_e, -DIRECT[i]);
+                if (self.ban[p] != KomaInf::Wall) && (self.ban[p] & KomaInf::Enemy) != 0 {
+                    //敵の駒が有る
+                    if (self.control_s[p] & 1 << (16 + i)) != 0 {
+                        pin[p] = DIRECT[i];
+                    }
+                }
+            }
+        }
+    }
     pub fn make_legal_moves(
         s_or_e: isize,
         tebuf: &mut Te,
