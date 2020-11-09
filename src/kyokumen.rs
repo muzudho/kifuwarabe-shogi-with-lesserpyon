@@ -4,8 +4,7 @@ use crate::Kiki;
 use crate::Te;
 use crate::DIRECT;
 use crate::{KomaInf, KomaInfo, Kyokumen};
-
-use std::ops::BitAnd;
+use num_traits::FromPrimitive;
 
 impl Default for Kyokumen {
     fn default() -> Self {
@@ -533,7 +532,7 @@ impl Kyokumen {
     pub fn  FPrint(FILE *fp){}
     */
     /// ピン（動かすと王を取られてしまうので動きが制限される駒）の状態を設定する
-    pub fn make_pin_inf(&mut self, pin: &mut [isize; 0x99]) {
+    pub fn make_pin_inf(&self, pin: &mut [isize; 16 * 11]) {
         // int i;
         // ピン情報を設定する
         for sq in 0x11..=0x99 {
@@ -566,43 +565,180 @@ impl Kyokumen {
             }
         }
     }
+    /// 駒の動きとして正しい動きを全て生成する。
     pub fn make_legal_moves(
-        s_or_e: isize,
+        &self,
+        s_or_e: KomaInf,
+        te_buf: &mut Te,
+        pin: Option<&mut [isize; 16 * 11]>, /* =NULL */
+    ) -> isize {
+        let mut pbuf: [isize; 16 * 11] = [0; 16 * 11];
+        let te_num = 0;
+        if let None = pin {
+            self.make_pin_inf(&mut pbuf);
+            pin = Some(&mut pbuf);
+        }
+        if s_or_e == KomaInf::Self_ && self.control_e[self.king_s] != 0 {
+            return self.anti_check(s_or_e, te_buf, pin, self.control_e[self.king_s]);
+        }
+        if s_or_e == KomaInf::Enemy && self.control_s[self.king_e] != 0 {
+            return self.anti_check(s_or_e, te_buf, pin, self.control_s[self.king_e]);
+        }
+
+        let suji: isize;
+        let dan: isize;
+        let start_dan: isize;
+        let end_dan: isize;
+        // 盤上の駒を動かす
+        for suji in (0x10..=0x90).step_by(0x10) {
+            for dan in 1..=9 {
+                if (self.ban[suji + dan] & s_or_e) != 0 {
+                    self.add_moves(s_or_e, te_num, te_buf, suji + dan, pin[suji + dan]);
+                }
+            }
+        }
+        // 歩を打つ
+        if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 {
+            for suji in (0x10..=0x90).step_by(0x10) {
+                // 二歩チェック
+                let nifu = false;
+                for dan in 1..=9 {
+                    if let Some(koma_inf) = KomaInf::from_isize(s_or_e | KomaInf::FU) {
+                        if self.ban[suji + dan] == koma_inf {
+                            nifu = true;
+                            break;
+                        }
+                    }
+                }
+                if nifu {
+                    continue;
+                };
+                //(先手なら２段目より下に、後手なら８段目より上に打つ）
+                if s_or_e == KomaInf::Self_ {
+                    start_dan = 2;
+                    end_dan = 9;
+                } else {
+                    start_dan = 1;
+                    end_dan = 8;
+                }
+                for dan in start_dan..=end_dan {
+                    // 打ち歩詰めもチェック
+                    if self.ban[dan + suji] == KomaInf::EMP
+                        && !self.utifudume(s_or_e, dan + suji, pin)
+                    {
+                        te_buf[te_num] = Te(0, suji + dan, s_or_e | FU, EMPTY);
+                        te_num += 1;
+                    }
+                }
+            }
+        }
+        // 香を打つ
+        if self.hand[s_or_e | KomaInf::KY] > 0 {
+            for suji in (0x10..=0x90).step_by(0x10) {
+                //(先手なら２段目より下に、後手なら８段目より上に打つ）
+                if s_or_e == KomaInf::Self_ {
+                    start_dan = 2;
+                    end_dan = 9;
+                } else {
+                    start_dan = 1;
+                    end_dan = 8;
+                }
+                for dan in start_dan..=end_dan {
+                    if self.ban[dan + suji] == KomaInf::EMP {
+                        te_buf[te_num] = Te(0, suji + dan, s_or_e | KY, EMPTY);
+                        te_num += 1;
+                    }
+                }
+            }
+        }
+        //桂を打つ
+        if self.hand[s_or_e | KomaInf::KE] > 0 {
+            //(先手なら３段目より下に、後手なら７段目より上に打つ）
+            for suji in (0x10..=0x90).step_by(0x10) {
+                if s_or_e == KomaInf::Self_ {
+                    start_dan = 3;
+                    end_dan = 9;
+                } else {
+                    start_dan = 1;
+                    end_dan = 7;
+                }
+                for dan in start_dan..=end_dan {
+                    if self.ban[dan + suji] == KomaInf::EMP {
+                        te_buf[te_num] = Te(0, suji + dan, s_or_e | KE, KomaInf::Empty);
+                        te_num += 1;
+                    }
+                }
+            }
+        }
+        // 銀～飛車は、どこにでも打てる
+        for koma in KomaInf::GI as isize..=KomaInf::HI as isize {
+            if let Some(koma_inf) = KomaInf::from_isize(koma) {
+                if self.hand[(s_or_e | koma_inf) as usize] > 0 {
+                    for suji in (0x10..=0x90).step_by(0x10) {
+                        for dan in 1..=9 {
+                            if self.ban[dan + suji] == KomaInf::EMP {
+                                te_buf[te_num] =
+                                    Te::from_4(0, suji + dan, s_or_e | koma, KomaInf::EMP);
+                                te_num += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return te_num;
+    }
+
+    /// TODO
+    pub fn anti_check(
+        &self,
+        s_or_e: KomaInf,
         tebuf: &mut Te,
-        pin: &mut isize, /* =NULL */
+        pin: Option<&mut [isize; 16 * 11]>,
+        control: Kiki,
     ) -> isize {
         0
     }
-    pub fn anti_check(s_or_e: isize, tebuf: &mut Te, pin: &mut isize, control: Kiki) -> isize {
-        0
-    }
-    pub fn Move(s_or_e: isize, te: &Te) {}
 
+    /// TODO
+    pub fn Move(s_or_e: KomaInf, te: &Te) {}
+
+    /// TODO
     fn init_control() {}
 
-    fn utifudume(s_or_e: isize, to: u8, pin: &mut isize) -> isize {
-        0
+    /// TODO
+    fn utifudume(&self, s_or_e: KomaInf, to: u8, pin: &mut isize) -> bool {
+        false
     }
 
-    /// 玉の動く手の生成
-    fn move_king(s_or_e: isize, te_num: &mut isize, te_top: &mut Te, kiki: Kiki) {}
+    /// TODO 玉の動く手の生成
+    fn move_king(s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, kiki: Kiki) {}
 
-    /// toに動く手の生成
-    fn move_to(s_or_e: isize, te_num: &mut isize, te_top: &mut Te, to: u8, pin: &mut isize) {}
+    /// TODO toに動く手の生成
+    fn move_to(s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, to: u8, pin: &mut isize) {}
 
-    /// toに駒を打つ手の生成
-    fn put_to(s_or_e: isize, te_num: &mut usize, te_top: &Te, to: u8, pin: &mut isize) {}
+    /// TODO toに駒を打つ手の生成
+    fn put_to(s_or_e: KomaInf, te_num: &mut usize, te_top: &Te, to: u8, pin: &mut isize) {}
+
+    /// TODO
     fn count_control_s(pos: isize) -> Kiki {
         0
     }
+
+    /// TODO
     fn count_control_e(pos: isize) -> Kiki {
         0
     }
-    fn countMove(s_or_e: isize, pos: isize, pin: &mut isize) -> Kiki {
+
+    /// TODO
+    fn countMove(s_or_e: KomaInf, pos: isize, pin: &mut isize) -> Kiki {
         0
     }
-    fn AddMoves(
-        s_or_e: isize,
+
+    /// TODO
+    fn add_moves(
+        s_or_e: KomaInf,
         te_num: &mut usize,
         te_top: &Te,
         from: u8,
@@ -610,8 +746,10 @@ impl Kyokumen {
         r_pin: isize, /* =0 */
     ) {
     }
+
+    /// TODO
     fn AddStraight(
-        s_or_e: isize,
+        s_or_e: KomaInf,
         te_num: &mut usize,
         te_top: &Te,
         from: u8,
@@ -620,8 +758,10 @@ impl Kyokumen {
         r_pin: isize, /* =0 */
     ) {
     }
+
+    /// TODO
     fn AddMove(
-        s_or_e: isize,
+        s_or_e: KomaInf,
         te_num: &mut usize,
         te_top: &Te,
         from: u8,

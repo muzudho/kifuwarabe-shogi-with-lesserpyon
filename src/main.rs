@@ -1,6 +1,12 @@
+extern crate num_derive;
+extern crate num_traits;
+
 pub mod koma_inf;
 pub mod kyokumen;
 pub mod te;
+
+use num_derive::FromPrimitive;
+// use num_traits::FromPrimitive;
 
 fn main() {
     println!("Kifuwarabe's shogi with Usapyon");
@@ -17,7 +23,7 @@ pub enum KomaInfo {
     // 成り駒につける目印（１ビット）
     Promoted = 1 << 3,
 }
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, FromPrimitive)]
 pub enum KomaInf {
     /// ３文字も準備しておくとソースが見やすいので（笑）
     EMP = 0,
