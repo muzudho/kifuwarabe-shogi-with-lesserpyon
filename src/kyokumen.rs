@@ -871,7 +871,7 @@ impl Kyokumen {
         0
     }
 
-    /// TODO
+    /// TODO 盤面のfromにある駒を動かす手を生成する。
     fn add_moves(
         &self,
         s_or_e: KomaInf,
@@ -881,13 +881,88 @@ impl Kyokumen {
         pin: ISquare,
         r_pin: ISquare, /* =0 */
     ) {
+        use crate::KomaInf::*;
+        match self.ban[from] {
+            SFU => self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin),
+            EFU => self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin),
+            SKY => self.add_straight(s_or_e, te_num, te_top, from, -1, pin, r_pin),
+            EKY => self.add_straight(s_or_e, te_num, te_top, from, 1, pin, r_pin),
+            SKE => {
+                self.add_move(s_or_e, te_num, te_top, from, 14, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -18, pin, r_pin);
+            }
+            EKE => {
+                self.add_move(s_or_e, te_num, te_top, from, -14, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 18, pin, r_pin);
+            }
+            SGI => {
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+            }
+            EGI => {
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+            }
+            SKI | STO | SNY | SNK | SNG => {
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
+            }
+            EKI | ETO | ENY | ENK | ENG => {
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
+            }
+            SRY | ERY => {
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+            }
+            SHI | EHI => {
+                self.add_straight(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, 16, pin, r_pin);
+            }
+            SUM | EUM => {
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+            }
+            SKA | EKA => {
+                self.add_straight(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+            }
+            SOU | EOU => {
+                self.move_king(s_or_e, te_num, te_top, 0); // 王手がかかっている時には、AntiCheckの方が呼ばれるから、Kikiは０です。
+            }
+            _ => {
+                panic!("Unimplemented Koma. {:?}", self.ban[from]);
+            }
+        }
     }
-
     /// TODO
-    fn AddStraight(
+    fn add_straight(
+        &self,
         s_or_e: KomaInf,
         te_num: &mut TeNum,
-        te_top: &Te,
+        te_top: &mut [Te; TE_LEN],
         from: USquare,
         dir: ISquare,
         pin: ISquare,
@@ -896,12 +971,13 @@ impl Kyokumen {
     }
 
     /// TODO
-    fn AddMove(
+    fn add_move(
+        &self,
         s_or_e: KomaInf,
         te_num: &mut TeNum,
-        te_top: &Te,
+        te_top: &mut [Te; TE_LEN],
         from: USquare,
-        diff: isize,
+        diff: ISquare,
         pin: ISquare,
         r_pin: ISquare, /* =0 */
     ) {

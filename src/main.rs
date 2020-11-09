@@ -45,7 +45,7 @@ pub enum KomaInfo {
     // 成り駒につける目印（１ビット）
     Promoted = 1 << 3,
 }
-#[derive(Clone, Copy, PartialEq, FromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, FromPrimitive)]
 pub enum KomaInf {
     /// ３文字も準備しておくとソースが見やすいので（笑）
     EMP = 0,
