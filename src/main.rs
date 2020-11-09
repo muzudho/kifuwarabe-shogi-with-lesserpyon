@@ -14,6 +14,10 @@ fn main() {
     let _kyokumen = Kyokumen::default();
 }
 
+/// れさぴょん には無いけど、盤のマス番地は明示しとこうぜ☆（＾～＾）
+type usquare = usize;
+type isquare = isize;
+
 /// 盤のデータの持ち方☆（＾～＾） パディングの説明とか どっかで読んどけだぜ☆（＾～＾）
 const BAN_LEN: usize = 16 * (9 + 2);
 
@@ -96,11 +100,11 @@ pub enum KomaInf {
     EOU = KomaInf::Enemy as isize + KomaInf::OU as isize, //敵の玉
 }
 
-/// 利き。
-type Kiki = usize;
-
 /// 方向を示す定数。
-const DIRECT: [isize; 12] = [17, 1, -15, 16, -16, 15, -1, -17, 14, -18, 18, -14];
+const DIRECT: [isquare; 12] = [17, 1, -15, 16, -16, 15, -1, -17, 14, -18, 18, -14];
+
+/// 利き。
+type Kiki = usquare;
 
 /// 局面。
 pub struct Kyokumen {

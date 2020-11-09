@@ -1,5 +1,7 @@
 //! 局面の実装。
 
+use crate::isquare;
+use crate::usquare;
 use crate::Kiki;
 use crate::Pin;
 use crate::Te;
@@ -21,7 +23,7 @@ impl Default for Kyokumen {
             king_s: 0,
             king_e: 0,
             can_move: [
-                // Direct[0]=17,
+                // DIRECT[0]=17,
                 // |／
                 //  ￣
                 [
@@ -50,7 +52,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=1,
+                // DIRECT[0]=1,
                 // ↓
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -70,7 +72,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-15,
+                // DIRECT[0]=-15,
                 // ＼|
                 // ￣
                 [
@@ -91,7 +93,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=16,
+                // DIRECT[0]=16,
                 // ←
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -111,7 +113,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-16,
+                // DIRECT[0]=-16,
                 // →
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -131,7 +133,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=15,
+                // DIRECT[0]=15,
                 //  __
                 // |＼
                 [
@@ -152,7 +154,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-1,
+                // DIRECT[0]=-1,
                 // ↑
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -172,7 +174,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-17
+                // DIRECT[0]=-17
                 // __
                 // ／|
                 [
@@ -193,7 +195,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=14,先手の桂馬
+                // DIRECT[0]=14,先手の桂馬
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -212,7 +214,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-18,先手の桂馬
+                // DIRECT[0]=-18,先手の桂馬
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -231,7 +233,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-14,後手の桂馬
+                // DIRECT[0]=-14,後手の桂馬
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -250,7 +252,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=18,後手の桂馬
+                // DIRECT[0]=18,後手の桂馬
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -273,7 +275,7 @@ impl Default for Kyokumen {
             // その方向に飛んで動くことが出来るか？
             // 飛車角香車と龍と馬しかそういう駒はない
             can_jump: [
-                // Direct[0]=17,
+                // DIRECT[0]=17,
                 // ＼|
                 // ￣
                 [
@@ -294,7 +296,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=1,
+                // DIRECT[0]=1,
                 // ↓
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -314,7 +316,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-15,
+                // DIRECT[0]=-15,
                 // ＼|
                 // ￣
                 [
@@ -335,7 +337,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=16,
+                // DIRECT[0]=16,
                 // ←
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -355,7 +357,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-16,
+                // DIRECT[0]=-16,
                 // →
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -375,7 +377,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=15,
+                // DIRECT[0]=15,
                 //  __
                 // |＼
                 [
@@ -396,7 +398,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-1,
+                // DIRECT[0]=-1,
                 // ↑
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -416,7 +418,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-17
+                // DIRECT[0]=-17
                 // __
                 // ／|
                 [
@@ -437,7 +439,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=14,先手の桂馬飛び
+                // DIRECT[0]=14,先手の桂馬飛び
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -456,7 +458,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-18,先手の桂馬飛び
+                // DIRECT[0]=-18,先手の桂馬飛び
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -475,7 +477,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=-14,後手の桂馬飛び
+                // DIRECT[0]=-14,後手の桂馬飛び
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -494,7 +496,7 @@ impl Default for Kyokumen {
                     // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                 ],
-                // Direct[0]=18,後手の桂馬飛び
+                // DIRECT[0]=18,後手の桂馬飛び
                 [
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
@@ -523,34 +525,34 @@ impl Default for Kyokumen {
 /// オリジナルの れさぴょん には無いぜ☆（＾～＾）  
 impl Kyokumen {
     /// Is enemy.
-    pub fn is_e(&self, sq: usize) -> bool {
+    pub fn is_e(&self, sq: usquare) -> bool {
         self.ban[sq] & KomaInf::Enemy != KomaInf::EMP
     }
     /// Is intersect enemy.
-    pub fn is_control_e(&self, sq: usize) -> bool {
+    pub fn is_control_e(&self, sq: usquare) -> bool {
         self.control_e[sq] != 0
     }
     /// Is intersect self.
-    pub fn is_control_s(&self, sq: usize) -> bool {
+    pub fn is_control_s(&self, sq: usquare) -> bool {
         self.control_s[sq] != 0
     }
     /// Exists.
-    pub fn is_exists(&self, sq: usize) -> bool {
+    pub fn is_exists(&self, sq: usquare) -> bool {
         self.ban[sq] != KomaInf::EMP
     }
     /// Exists.
-    pub fn is_exists_s_or_e(&self, sq: usize, s_or_e: KomaInf) -> bool {
+    pub fn is_exists_s_or_e(&self, sq: usquare, s_or_e: KomaInf) -> bool {
         self.ban[sq] & s_or_e != KomaInf::EMP
     }
 }
 
 impl Kyokumen {
-    pub fn search(&self, mut pos: usize, dir: isize) -> usize {
+    pub fn search(&self, mut sq: usquare, dir: isquare) -> usquare {
         while {
-            pos = (pos as isize + dir) as usize;
-            self.ban[pos] as isize == KomaInfo::Empty as isize
+            sq = (sq as isquare + dir) as usquare;
+            !self.is_exists(sq)
         } {}
-        return pos;
+        return sq;
     }
     // pub Kyokumen() {}
     // pub Kyokumen(int tesu,KomaInf ban[9][9],int Motigoma[]){}
@@ -761,13 +763,50 @@ impl Kyokumen {
         s_or_e: KomaInf,
         te_buf: &mut [Te; TE_LEN],
         pin: &Pin,
-        control: Kiki,
+        kiki: Kiki,
     ) -> usize {
-        0
-    }
+        let king:usquare;
+        let te_num=0;
+        if (kiki & (kiki-1))!=0 {
+          //両王手は玉を動かすしかない
+          self.move_king(s_or_e,te_num, te_buf, kiki);
+        } else {
+          if s_or_e==KomaInf::Self_ {
+            king=self.king_s;
+          } else {
+            king=self.king_e;
+          }
+          let id:usize;
+          let check:usquare;
+          for id in 0..= 31{
+            if kiki == (1usize << id){ break;}
+          }
+          if id < 16 {
+            check = king as isquare - DIRECT[id];
+          } else {
+            check = self.search(king,-DIRECT[id-16]);
+          }
+          //王手駒を取る
+          self.move_to(s_or_e,te_num, te_buf, check, pin);
+          
+          //玉を動かす
+          self.move_king(s_or_e,te_num, te_buf, kiki);
+      
+          if id >= 16 {
+            //合駒をする手を生成する
+            let i:usize;
+            for (i = king - DIRECT[id-16]; ban[i] == EMPTY; i -= DIRECT[id-16]) {
+              self.move_to(s_or_e,te_num, te_buf, i, pin); //移動合
+            }
+            for (i = king - DIRECT[id-16]; ban[i] == EMPTY; i -= DIRECT[id-16]) {
+              self.put_to(s_or_e,te_num, te_buf, i, pin);  //駒を打つ合
+            t}
+          } 
+        }
+        return te_num;    }
 
     /// TODO
-    pub fn Move(s_or_e: KomaInf, te: &Te) {}
+    pub fn move(s_or_e: KomaInf, te: &Te) {}
 
     /// TODO
     fn init_control() {}
@@ -778,13 +817,13 @@ impl Kyokumen {
     }
 
     /// TODO 玉の動く手の生成
-    fn move_king(s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, kiki: Kiki) {}
+    fn move_king(&self,s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, kiki: Kiki) {}
 
     /// TODO toに動く手の生成
-    fn move_to(s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, to: u8, pin: &mut isize) {}
+    fn move_to(&self,s_or_e: KomaInf, te_num: &mut isize, te_top: &mut Te, to: u8, pin: &mut isize) {}
 
     /// TODO toに駒を打つ手の生成
-    fn put_to(s_or_e: KomaInf, te_num: &mut usize, te_top: &Te, to: u8, pin: &mut isize) {}
+    fn put_to(&self,s_or_e: KomaInf, te_num: &mut usize, te_top: &Te, to: u8, pin: &mut isize) {}
 
     /// TODO
     fn count_control_s(pos: isize) -> Kiki {
