@@ -618,7 +618,7 @@ impl Kyokumen {
     ///
     /// * `usize` - 手目。
     pub fn make_legal_moves(
-        &self,
+        &mut self,
         s_or_e: KomaInf,
         te_buf: &mut [Te; TE_LEN],
         pin: &mut Option<Pin>, /* =NULL */
@@ -834,8 +834,67 @@ impl Kyokumen {
     fn init_control() {}
 
     /// TODO
-    fn utifudume(&self, s_or_e: KomaInf, to: USquare, pin: &Pin) -> bool {
-        false
+    fn utifudume(&mut self, s_or_e: KomaInf, to: USquare, pin: &Pin) -> bool {
+        if s_or_e == KomaInf::Self_ {
+            // まず、玉の頭に歩を打つ手じゃなければ打ち歩詰めの心配はない。
+            if self.king_e + 1 != to {
+                return false;
+            }
+        } else {
+            // まず、玉の頭に歩を打つ手じゃなければ打ち歩詰めの心配はない。
+            if self.king_s - 1 != to {
+                return false;
+            }
+        }
+        //実際に歩を打って確かめてみる。
+        self.ban[to] = KomaInf::FU | s_or_e;
+        if s_or_e == KomaInf::Self_ {
+            // 自分の利きがあったら相手は玉で取れない　＆　取る動きを列挙してみたら玉で取る手しかない
+            if self.is_control_s(to)
+                && (self.count_move(KomaInf::Enemy, to as ISquare, pin) == 1 << 2)
+            {
+                // 玉に逃げ道があるかどうかをチェック
+                for i in 0..8 {
+                    if !self.is_e((self.king_e as ISquare + DIRECT[i]) as USquare)
+                        && !self.is_control_s((self.king_e as ISquare + DIRECT[i]) as USquare)
+                    {
+                        // 逃げ道があったので、盤面を元の状態に戻して、
+                        self.ban[to] = KomaInf::EMP;
+                        // 打ち歩詰めではなかった。
+                        return false;
+                    }
+                }
+                // 玉の逃げ道もないのなら、打ち歩詰め。盤面の状態は元に戻す。
+                self.ban[to] = KomaInf::EMP;
+                return true;
+            }
+            // 玉以外で取る手があるので打ち歩詰めではない。
+            self.ban[to] = KomaInf::EMP;
+            return false;
+        } else {
+            // 自分の利きがあったら相手は玉で取れない　＆　取る動きを列挙してみたら玉で取る手しかない
+            if self.is_control_e(to)
+                && (self.count_move(KomaInf::Self_, to as ISquare, pin) == 1 << 6)
+            {
+                // 玉に逃げ道があるかどうかをチェック
+                for i in 0..8 {
+                    if !self.is_s((self.king_s as ISquare + DIRECT[i]) as USquare)
+                        && !self.is_control_e((self.king_s as ISquare + DIRECT[i]) as USquare)
+                    {
+                        // 逃げ道があったので、盤面を元の状態に戻して、
+                        self.ban[to] = KomaInf::EMP;
+                        // 打ち歩詰めではなかった。
+                        return false;
+                    }
+                }
+                // 玉の逃げ道もないのなら、打ち歩詰め。盤面の状態は元に戻す。
+                self.ban[to] = KomaInf::EMP;
+                return true;
+            }
+            // 玉以外で取る手があるので打ち歩詰めではない。
+            self.ban[to] = KomaInf::EMP;
+            return false;
+        }
     }
 
     /// TODO 玉の動く手の生成
@@ -919,7 +978,7 @@ impl Kyokumen {
 
     /// TODO ある場所に移動できる駒を全部集めて、Kiki情報にして返す。
     /// このとき、pinされている駒はpinの方向にしか動けない。
-    fn countMove(&self, s_or_e: KomaInf, sq: ISquare, pin: &Pin) -> Kiki {
+    fn count_move(&self, s_or_e: KomaInf, sq: ISquare, pin: &Pin) -> Kiki {
         let mut ret: Kiki = 0;
         let mut dir = 0;
         let mut b = 1;
