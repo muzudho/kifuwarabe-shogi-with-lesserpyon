@@ -1,5 +1,6 @@
 use crate::KomaInf;
 use crate::Te;
+use crate::USquare;
 
 /// Teを空のデータで初期化したい時のためのコンストラクタです。
 impl Default for Te {
@@ -7,8 +8,8 @@ impl Default for Te {
         Te {
             from: 0,
             to: 0,
-            koma: KomaInf::EMP,
-            capture: KomaInf::EMP,
+            koma: KomaInf::EMP as u8,
+            capture: KomaInf::EMP as u8,
             promote: 0,
             kind: 0,
             value: 0,
@@ -17,23 +18,23 @@ impl Default for Te {
 }
 
 impl Te {
-    pub fn from_7(f: u8, t: u8, ko: KomaInf, c: KomaInf, p: u8, ki: u8, v: i16) -> Self {
+    pub fn from_7(f: USquare, t: USquare, ko: KomaInf, c: KomaInf, p: u8, ki: u8, v: i16) -> Self {
         Te {
-            from: f,
-            to: t,
-            koma: ko,
-            capture: c,
+            from: f as u8,
+            to: t as u8,
+            koma: ko as u8,
+            capture: c as u8,
             promote: p,
             kind: ki,
             value: v,
         }
     }
-    pub fn from_4(f: u8, t: u8, k: KomaInf, c: KomaInf) -> Self {
+    pub fn from_4(f: USquare, t: USquare, k: KomaInf, c: KomaInf) -> Self {
         Te {
-            from: f,
-            to: t,
-            koma: k,
-            capture: c,
+            from: f as u8,
+            to: t as u8,
+            koma: k as u8,
+            capture: c as u8,
             promote: 0,
             kind: 0,
             value: 0,

@@ -10,6 +10,10 @@ use num_derive::FromPrimitive;
 
 fn main() {
     println!("Kifuwarabe's shogi with Lesserpyon");
+    println!(
+        "Computer\
+shogi title match"
+    );
 
     let _kyokumen = Kyokumen::default();
 }
@@ -174,12 +178,17 @@ pub struct Kyokumen {
 pub struct Te {
     // どこから・どこへはそれぞれ１Byteであらわせます。
     // 詳しくは局面クラスを参照して下さい。
+    //
+    // USquare ではなく u8 にします。
     pub from: u8,
+    // USquare ではなく u8 にします。
     pub to: u8,
     // 動かした駒
-    pub koma: KomaInf,
+    // KomaInf ではなく u8 にします。
+    pub koma: u8,
     // 取った駒
-    pub capture: KomaInf,
+    // KomaInf ではなく u8 にします。
+    pub capture: u8,
     // 成/不成り
     pub promote: u8,
     // これは、手の生成の際に種別を用いたい時に使います（将来の拡張用）

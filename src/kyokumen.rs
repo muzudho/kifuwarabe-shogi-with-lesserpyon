@@ -687,7 +687,7 @@ impl Kyokumen {
                     {
                         te_buf[te_num as usize] = Te::from_4(
                             0,
-                            (suji + dan as usize) as u8,
+                            (suji + dan as usize) as USquare,
                             s_or_e | KomaInf::FU,
                             KomaInf::EMP,
                         );
@@ -711,7 +711,7 @@ impl Kyokumen {
                     if !self.is_exists(dan as usize + suji) {
                         te_buf[te_num as usize] = Te::from_4(
                             0,
-                            (suji + dan as usize) as u8,
+                            (suji + dan as usize) as USquare,
                             s_or_e | KomaInf::KY,
                             KomaInf::EMP,
                         );
@@ -735,7 +735,7 @@ impl Kyokumen {
                     if !self.is_exists(dan as usize + suji) {
                         te_buf[te_num as usize] = Te::from_4(
                             0,
-                            (suji + dan as usize) as u8,
+                            (suji + dan as usize) as USquare,
                             s_or_e | KomaInf::KE,
                             KomaInf::EMP,
                         );
@@ -753,7 +753,7 @@ impl Kyokumen {
                             if !self.is_exists(dan + suji) {
                                 te_buf[te_num] = Te::from_4(
                                     0,
-                                    (suji + dan) as u8,
+                                    (suji + dan) as USquare,
                                     KomaInf::from_isize(s_or_e as isize | koma).unwrap(),
                                     KomaInf::EMP,
                                 );
@@ -774,7 +774,7 @@ impl Kyokumen {
     ///
     /// * `usize` - 手目。
     pub fn anti_check(
-        &self,
+        &mut self,
         s_or_e: KomaInf,
         te_buf: &mut [Te; TE_LEN],
         pin: &Pin,
@@ -909,13 +909,54 @@ impl Kyokumen {
 
     /// TODO toに動く手の生成
     fn move_to(
-        &self,
+        &mut self,
         s_or_e: KomaInf,
         te_num: &mut TeNum,
         te_top: &mut [Te; TE_LEN],
         to: USquare,
         pin: &Pin,
     ) {
+        let mut dan: USquare = to & 0x0f;
+        if s_or_e == KomaInf::Enemy {
+            dan = 10 - dan;
+        }
+        if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 && dan > 1 {
+            // 歩を打つ手を生成
+            // 二歩チェック
+            let suji: USquare = to & 0xf0;
+            let mut nifu: bool = false;
+            for d in 1..=9 {
+                if self.ban[suji + d] == s_or_e | KomaInf::FU {
+                    nifu = true;
+                    break;
+                }
+            }
+            // 打ち歩詰めもチェック
+            if !nifu && !self.utifudume(s_or_e, to, pin) {
+                te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::FU, KomaInf::EMP);
+                *te_num += 1;
+            }
+        }
+        if self.hand[(s_or_e | KomaInf::KY) as usize] > 0 && dan > 1 {
+            // 香を打つ手を生成
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KY, KomaInf::EMP);
+            *te_num += 1;
+        }
+        if self.hand[(s_or_e | KomaInf::KE) as usize] > 0 && dan > 2 {
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KE, KomaInf::EMP);
+            *te_num += 1;
+        }
+        for koma in KomaInf::GI as usize..=KomaInf::HI as usize {
+            if self.hand[s_or_e as usize | koma as usize] > 0 {
+                te_top[*te_num as usize] = Te::from_4(
+                    0,
+                    to,
+                    KomaInf::from_usize(s_or_e as usize | koma as usize).unwrap(),
+                    KomaInf::EMP,
+                );
+                *te_num += 1;
+            }
+        }
     }
 
     /// TODO toに駒を打つ手の生成
