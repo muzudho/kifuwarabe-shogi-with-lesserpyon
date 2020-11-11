@@ -3,6 +3,7 @@ extern crate num_traits;
 
 pub mod koma_inf;
 pub mod kyokumen;
+pub mod logic;
 pub mod te;
 
 use num_derive::FromPrimitive;

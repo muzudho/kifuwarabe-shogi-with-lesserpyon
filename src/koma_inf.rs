@@ -21,3 +21,10 @@ impl BitOr for KomaInf {
         KomaInf::from_usize(self as usize | rhs as usize).unwrap()
     }
 }
+
+impl KomaInf {
+    /// `if a & b` を仕方なく `if KomaInf::stood(a & b)` にするだけ。
+    pub fn stood(a: Self) -> bool {
+        a != KomaInf::EMP
+    }
+}

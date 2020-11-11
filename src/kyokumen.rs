@@ -1,5 +1,6 @@
 //! 局面の実装。
 
+use crate::logic::*;
 use crate::ISquare;
 use crate::Kiki;
 use crate::Pin;
@@ -912,8 +913,7 @@ impl Kyokumen {
         te_top: &mut [Te; TE_LEN],
         kiki: Kiki,
     ) {
-        let i: isize;
-        let id: Option<USquare> = None; //隣接王手駒の位置のid
+        let mut id: Option<USquare> = None; //隣接王手駒の位置のid
 
         // 両王手でないなら王手駒の位置を探す
         for i in 0..8 {
@@ -926,21 +926,21 @@ impl Kyokumen {
             // 隣接の王手 最初に取る手を生成するのだ
             if s_or_e == KomaInf::Self_ {
                 let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_s, id as isize)];
-                if (( koma==KomaInf::EMP || (koma & ENEMY))
-                    && !self.count_control_e(self.king_s - DIRECT[id]) //敵の駒が効いていない
-                    && !(kiki & (1 << (23-id))))
+                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Enemy))
+                    && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s,id as isize)) //敵の駒が効いていない
+                    && !(kiki & (1 << (23-id))).stood()
                 //敵の飛駒で貫かれていない
                 {
-                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[id], 0);
+                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[id], 0, 0);
                 }
             } else {
                 let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_e, id as isize)];
-                if (( koma==KomaInf::EMP || (koma & KomaInf::Self_))
-                    && !self.count_control_s(self.king_e - DIRECT[id]) //敵の駒が効いていない
-                    && !(kiki & (1 << (23-id))))
+                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Self_))
+                    && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, id as isize)) //敵の駒が効いていない
+                    && !(kiki & (1 << (23-id))).stood()
                 //敵の飛駒で貫かれていない
                 {
-                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[id], 0);
+                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[id], 0, 0);
                 }
             }
         }
@@ -952,22 +952,22 @@ impl Kyokumen {
             if s_or_e == KomaInf::Self_ {
                 let koma: KomaInf =
                     self.ban[(self.king_s as ISquare - DIRECT[i as usize]) as usize];
-                if (( koma==KomaInf::EMP || (koma & KomaInf::Enemy))
-                    && !self.is_control_e(self.king_s - DIRECT[i]) //敵の駒が効いていない
-                    && !(kiki & (1 << (23-i))))
+                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Enemy))
+                    && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s, i as isize)) //敵の駒が効いていない
+                    && !(kiki & (1 << (23-i))).stood()
                 //敵の飛駒で貫かれていない
                 {
-                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[i], 0);
+                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[i], 0, 0);
                 }
             } else {
                 let koma: KomaInf =
                     self.ban[(self.king_e as ISquare - DIRECT[i as usize]) as usize];
-                if (( koma==KomaInf::EMP || (koma & KomaInf::Self_))
-                        && !self.is_control_s(self.king_e - DIRECT[i]) //敵の駒が効いていない
-                        && !(kiki & (1 << (23-i))))
+                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Self_))
+                        && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, i as isize)) //敵の駒が効いていない
+                        && !(kiki & (1 << (23-i))).stood()
                 //敵の飛駒で貫かれていない
                 {
-                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[i], 0);
+                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[i], 0, 0);
                 }
             }
         }
