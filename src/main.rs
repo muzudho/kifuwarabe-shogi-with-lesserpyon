@@ -139,16 +139,16 @@ pub struct Kyokumen {
     /// # Remarks
     ///
     /// * `16 *` - 高速化のためには、１次元配列として、演算としては＊１６など２の階乗倍が使えることが望ましい。
-    pub ban: [KomaInf; 16 * (9 + 2)],
+    pub ban: [KomaInf; BAN_LEN],
 
     /// 味方の駒の利き  
     ///
     /// # Tips
     ///
     /// * 敵の駒と自分の駒の利きは別々に保持します。
-    pub control_s: [Kiki; 16 * 11],
+    pub control_s: [Kiki; BAN_LEN],
     /// 敵の駒の利き  
-    pub control_e: [Kiki; 16 * 11],
+    pub control_e: [Kiki; BAN_LEN],
 
     /// 持ち駒の枚数  
     ///

@@ -858,9 +858,65 @@ impl Kyokumen {
     }
 
     /// TODO
-    pub fn move_(s_or_e: KomaInf, te: &Te) {}
+    pub fn move_(&mut self, s_or_e: KomaInf, te: &Te) {
+        // let dan: usize;
+        // let suji: usize;
+        let mut i;
+        let mut j: USquare;
+        let mut b;
+        let mut bj;
+        self.control_s = [0; BAN_LEN];
+        self.control_e = [0; BAN_LEN];
+        for suji in (0x10..=0x90).step_by(0x10) {
+            for dan in 1..=9 {
+                if (self.ban[suji + dan] & KomaInf::Enemy).stood() {
+                    //敵の駒
+                    //駒の効きを追加する
+                    i = 0;
+                    b = 1;
+                    bj = 1 << 16;
+                    while i < 12 {
+                        if self.can_jump[i][self.ban[dan + suji] as usize] != 0 {
+                            j = dan + suji;
+                            while {
+                                j = (j as ISquare + DIRECT[i]) as USquare;
+                                self.control_e[j] |= bj;
+                                self.ban[j] == KomaInf::EMP
+                            } {}
+                        } else if self.can_move[i][self.ban[dan + suji] as usize] != 0 {
+                            self.control_e[((dan + suji) as isize + DIRECT[i]) as usize] |= b;
+                        }
+                        i += 1;
+                        b <<= 1;
+                        bj <<= 1;
+                    }
+                } else if (self.ban[suji + dan] & KomaInf::Self_).stood() {
+                    //味方の駒が有る
+                    //駒の効きを追加する
+                    i = 0;
+                    b = 1;
+                    bj = 1 << 16;
+                    while i < 12 {
+                        if self.can_jump[i][self.ban[dan + suji] as usize] != 0 {
+                            j = dan + suji;
+                            while {
+                                j = (j as ISquare + DIRECT[i]) as USquare;
+                                self.control_s[j] |= bj;
+                                self.ban[j] == KomaInf::EMP
+                            } {}
+                        } else if self.can_move[i][self.ban[dan + suji] as usize] != 0 {
+                            self.control_s[((dan + suji) as isize + DIRECT[i]) as usize] |= b;
+                        }
+                        i += 1;
+                        b <<= 1;
+                        bj <<= 1;
+                    }
+                }
+            }
+        }
+    }
 
-    /// TODO
+    /// TODO １章で追加。controlS,controlEの初期化。
     fn init_control() {}
 
     /// TODO
