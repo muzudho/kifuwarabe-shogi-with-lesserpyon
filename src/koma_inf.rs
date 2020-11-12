@@ -1,3 +1,4 @@
+use crate::logic::Logic;
 use crate::num_traits::FromPrimitive;
 use crate::KomaInf;
 use std::ops::{BitAnd, BitOr};
@@ -22,9 +23,9 @@ impl BitOr for KomaInf {
     }
 }
 
-impl KomaInf {
+impl Logic for KomaInf {
     /// `if a & b` を仕方なく `if KomaInf::stood(a & b)` にするだけ。
-    pub fn stood(a: Self) -> bool {
-        a != KomaInf::EMP
+    fn stood(&self) -> bool {
+        *self != KomaInf::EMP
     }
 }

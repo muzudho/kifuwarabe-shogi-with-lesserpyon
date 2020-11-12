@@ -948,7 +948,7 @@ impl Kyokumen {
             // 隣接の王手 最初に取る手を生成するのだ
             if s_or_e == KomaInf::Self_ {
                 let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_s, id as isize)];
-                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Enemy))
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Enemy).stood())
                     && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s,id as isize)) //敵の駒が効いていない
                     && !(kiki & (1 << (23-id))).stood()
                 //敵の飛駒で貫かれていない
@@ -957,7 +957,7 @@ impl Kyokumen {
                 }
             } else {
                 let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_e, id as isize)];
-                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Self_))
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Self_).stood())
                     && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, id as isize)) //敵の駒が効いていない
                     && !(kiki & (1 << (23-id))).stood()
                 //敵の飛駒で貫かれていない
@@ -974,7 +974,7 @@ impl Kyokumen {
             if s_or_e == KomaInf::Self_ {
                 let koma: KomaInf =
                     self.ban[(self.king_s as ISquare - DIRECT[i as usize]) as usize];
-                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Enemy))
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Enemy).stood())
                     && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s, i as isize)) //敵の駒が効いていない
                     && !(kiki & (1 << (23-i))).stood()
                 //敵の飛駒で貫かれていない
@@ -984,7 +984,7 @@ impl Kyokumen {
             } else {
                 let koma: KomaInf =
                     self.ban[(self.king_e as ISquare - DIRECT[i as usize]) as usize];
-                if ( koma==KomaInf::EMP || KomaInf::stood(koma & KomaInf::Self_))
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Self_).stood())
                         && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, i as isize)) //敵の駒が効いていない
                         && !(kiki & (1 << (23-i))).stood()
                 //敵の飛駒で貫かれていない
@@ -1228,7 +1228,7 @@ impl Kyokumen {
             }
         }
     }
-    /// TODO
+    /// TODO 飛車角香車がまっすぐに進む手の生成
     fn add_straight(
         &self,
         s_or_e: KomaInf,
@@ -1239,6 +1239,22 @@ impl Kyokumen {
         pin: ISquare,
         r_pin: ISquare, /* =0 */
     ) {
+        if dir == r_pin || dir == -r_pin {
+            return;
+        }
+        let mut i: isize;
+        if pin == 0 || pin == dir || pin == -dir {
+            // 空白の間、動く手を生成する
+            i = dir;
+            while self.ban[(from as isize + i) as usize] == KomaInf::EMP {
+                self.add_move(s_or_e, te_num, te_top, from, i, 0, 0);
+                i += dir;
+            }
+            // 味方の駒でないなら、そこへ動く
+            if !((self.ban[(from as isize + i) as usize] & s_or_e).stood()) {
+                self.add_move(s_or_e, te_num, te_top, from, i, 0, 0);
+            }
+        }
     }
 
     /// TODO 手の生成：成り・不成りも意識して、駒の動く手を生成する。
@@ -1259,7 +1275,7 @@ impl Kyokumen {
         let dan: usize = to & 0x0f;
         let from_dan: usize = from & 0x0f;
 
-        if (pin == 0 || pin == diff || pin == -diff) && !KomaInf::stood(self.ban[to] & s_or_e) {
+        if (pin == 0 || pin == diff || pin == -diff) && !(self.ban[to] & s_or_e).stood() {
             if self.ban[from] == KomaInf::SKE && dan <= 2 {
                 // 必ず成る
                 te_top[*te_num as usize] = Te::from_5(from, to, self.ban[from], self.ban[to], 1);
