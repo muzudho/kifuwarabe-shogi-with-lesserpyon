@@ -2,12 +2,12 @@ extern crate num_derive;
 extern crate num_traits;
 
 pub mod koma_inf;
+pub mod koma_moves;
 pub mod kyokumen;
 pub mod logic;
 pub mod te;
 
 use num_derive::FromPrimitive;
-// use num_traits::FromPrimitive;
 
 fn main() {
     println!("Kifuwarabe's shogi with Lesserpyon");
@@ -110,9 +110,6 @@ pub enum KomaInf {
     EOU = KomaInf::Enemy as isize + KomaInf::OU as isize, //敵の玉
 }
 
-/// 方向を示す定数。
-const DIRECT: [ISquare; 12] = [17, 1, -15, 16, -16, 15, -1, -17, 14, -18, 18, -14];
-
 /// 利き。
 type Kiki = USquare;
 
@@ -168,8 +165,6 @@ pub struct Kyokumen {
     /// 敵玉の位置
     pub king_e: Kiki,
 
-    /// 成ることが出来る駒か？
-    pub can_promote: [isize; 64],
     /// その方向に動けるか？その方向に飛んで動くものは入れてはいけない。
     pub can_move: [[isize; 64]; 12],
     /// その方向に飛んで動くことが出来るか？
@@ -199,3 +194,5 @@ pub struct Te {
     // その手の仮評価（手の価値）です
     pub value: i16,
 }
+
+pub struct KomaMoves {}

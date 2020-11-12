@@ -1,5 +1,7 @@
 //! 局面の実装。
 
+use crate::koma_moves::CAN_PROMOTE;
+use crate::koma_moves::DIRECT;
 use crate::logic::*;
 use crate::ISquare;
 use crate::Kiki;
@@ -8,7 +10,6 @@ use crate::Te;
 use crate::TeNum;
 use crate::USquare;
 use crate::BAN_LEN;
-use crate::DIRECT;
 use crate::TE_LEN;
 use crate::{KomaInf, Kyokumen};
 use num_traits::FromPrimitive;
@@ -24,33 +25,6 @@ impl Default for Kyokumen {
             tesu: 0,
             king_s: 0,
             king_e: 0,
-            // 成ることが出来る駒か？
-            can_promote: [
-                // 'Cascadia Code' のような 等幅フォント にしても桁揃えがずれるぜ☆（＾～＾）
-                // プロポーショナル・フォントなアルファベットを使う海外に 方眼紙 の文化は無いのだろう☆（＾～＾）
-                // ちょっとずつ だんだんずれてくる……、仕方ない 横幅を長く取って ずれ を目立たなくさせるか……☆（＾～＾）
-                //
-                // 桁揃えって何？　だって☆（＾～＾）！？
-                // おいお前、PC9801 の画面の　漢字とアルファベットが混合しても等幅なのを見てこいだぜ☆ｍ９（＾～＾）！
-                // 暴れたろ☆（＾～＾）！
-                //
-                // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
-                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
-                // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
-                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
-                // 空 , △歩   , △香   , △桂    , △銀   , △金   , △角   , △飛   ,
-                0_____, 1_____, 1_____, 1_____, 1_____, 0_____, 1_____, 1_____, //
-                // △王, △と   , △杏   , △圭    , △全   , △金   , △馬   , △龍   ,
-                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
-                // 空 , ▼歩   , ▼香   , ▼桂    , ▼銀   , ▼金   , ▼角   , ▼飛   ,
-                0_____, 1_____, 1_____, 1_____, 1_____, 0_____, 1_____, 1_____, //
-                // ▼王, ▼と   , ▼杏   , ▼圭    , ▼全   , ▼金   , ▼馬   , ▼龍   ,
-                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
-                // ▼壁, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
-                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
-                // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
-                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
-            ],
             can_move: [
                 // DIRECT[0]=17,
                 // |／
@@ -580,7 +554,7 @@ impl Kyokumen {
         self.can_jump[dir][self.ban[sq] as usize] != 0
     }
     pub fn can_promote(&self, sq: USquare) -> bool {
-        self.can_promote[self.ban[sq] as usize] != 0
+        CAN_PROMOTE[self.ban[sq] as usize] != 0
     }
     pub fn get_koma_by_offset_sq(&self, absolute_sq: USquare, relative_sq: ISquare) -> KomaInf {
         self.ban[Kyokumen::get_offset_sq(absolute_sq, relative_sq)]
@@ -599,13 +573,13 @@ impl Kyokumen {
         } {}
         return sq;
     }
-    // pub Kyokumen() {}
-    // pub Kyokumen(int tesu,KomaInf ban[9][9],int Motigoma[]){}
+    // TODO pub Kyokumen() {}
+    // TODO pub Kyokumen(int tesu,KomaInf ban[9][9],int Motigoma[]){}
     pub fn print() {
-        /*FPrint(stdout);*/
+        /* TODO FPrint(stdout);*/
     }
     /*
-    pub fn  FPrint(FILE *fp){}
+    TODO pub fn  FPrint(FILE *fp){}
     */
     /// ピン（動かすと王を取られてしまうので動きが制限される駒）の状態を設定する
     pub fn make_pin_inf(&self, pin: &mut Pin) {
@@ -857,8 +831,167 @@ impl Kyokumen {
         return te_num;
     }
 
-    /// TODO
+    /*
+    /// TODO 手で局面を進める
     pub fn move_(&mut self, s_or_e: KomaInf, te: &Te) {
+        let i;
+        let j;
+        let b;
+        let bj;
+        if te.from>0x10 {
+            // 元いた駒のコントロールを消す
+            let dir=0;
+            let b=1;
+            let bj=1<<16;
+            while dir<12 {
+                if s_or_e==KomaInf::Self_ {
+                    self.control_s[te.from+DIRECT[dir]]&=~b;
+                } else {
+                    self.control_e[te.from+DIRECT[dir]]&=~b;
+                }
+                if (self.can_jump[dir][te.koma]) {
+                    int j = te.from;
+                    do {
+                        j += DIRECT[dir];
+                        if (s_or_e==KomaInf::Self_) {
+                            self.control_s[j] &= ~bj;
+                        } else {
+                            self.control_e[j] &= ~bj;
+                        }
+                    } while (ban[j] == KomaInf::EMP);
+                }
+                dir+=1;
+                b<<=1;
+                bj<<=1;
+            }
+            // 元いた位置は空白になる
+            ban[te.from]=KomaInf::EMP;
+            // 空白になったことで変わるハッシュ値
+            KyokumenHashVal^=HashSeed[te.koma][te.from];
+            KyokumenHashVal^=HashSeed[KomaInf::EMP][te.from];
+            // 飛び利きを伸ばす
+            for (i = 0, bj = (1<<16); i < 8; i++, bj<<=1) {
+                int Dir=DIRECT[i];
+                if (self.control_s[te.from] & bj) {
+                    j = te.from;
+                    do {
+                        j += Dir;
+                        self.control_s[j] |= bj;
+                    } while (ban[j] == KomaInf::EMP);
+                }
+                if (self.control_e[te.from] & bj) {
+                    j = te.from;
+                    do {
+                        j += Dir;
+                        self.control_e[j] |= bj;
+                    } while (ban[j] == KomaInf::EMP);
+                }
+            }
+        } else {
+            // 持ち駒から一枚減らす
+            HandHashVal^=HandHashSeed[te.koma][self.hand[te.koma]];
+            self.hand[te.koma]--;
+            value-=HandValue[te.koma];
+            value+=KomaValue[te.koma];
+        }
+        if self.ban[te.to]!=KomaInf::EMP {
+            // 相手の駒を持ち駒にする。
+            // 持ち駒にする時は、成っている駒も不成りに戻す。（&~PROMOTED）
+            value-=KomaValue[self.ban[te.to]];
+            value+=HandValue[s_or_e|(self.ban[te.to]&~PROMOTED&~KomaInf::Self_&~ENEMY)];
+            int koma=s_or_e|(self.ban[te.to]&~PROMOTED&~KomaInf::Self_&~ENEMY);
+            self.hand[koma]++;
+            // ハッシュに取った駒を加える
+            HandHashVal^=HandHashSeed[koma][self.hand[koma]];
+            //取った駒の効きを消す
+            for (i = 0, b = 1, bj = (1<<16); i < 12; i++, b<<=1, bj<<=1) {
+                int Dir=DIRECT[i];
+                if (self.can_jump[i][ban[te.to]]) {
+                    j = te.to;
+                    do {
+                        j += Dir;
+                        if (s_or_e==KomaInf::Self_) {
+                            self.control_e[j] &= ~bj;
+                        } else {
+                            self.control_s[j] &= ~bj;
+                        }
+                    } while (ban[j] == KomaInf::EMP);
+                } else {
+                    j=te.to + Dir;
+                    if (s_or_e==KomaInf::Self_) {
+                        self.control_e[j] &= ~b;
+                    } else {
+                        self.control_s[j] &= ~b;
+                    }
+                }
+            }
+        } else {
+            // 移動先で遮った飛び利きを消す
+            for (i = 0, bj = (1<<16); i < 8; i++, bj<<=1) {
+                int Dir=DIRECT[i];
+                if (self.control_s[te.to] & bj) {
+                    j = te.to;
+                    do {
+                        j += Dir;
+                        self.control_s[j] &= ~bj;
+                    } while (ban[j] == KomaInf::EMP);
+                }
+                if (self.control_e[te.to] & bj) {
+                    j = te.to;
+                    do {
+                        j += Dir;
+                        self.control_e[j] &= ~bj;
+                    } while (ban[j] == KomaInf::EMP);
+                }
+            }
+        }
+        // ban[te.to]にあったものをＨａｓｈから消す
+        KyokumenHashVal^=HashSeed[self.ban[te.to]][te.to];
+        if (te.promote) {
+            value-=KomaValue[te.koma];
+            value+=KomaValue[te.koma|PROMOTED];
+            ban[te.to]=te.koma|PROMOTED;
+        } else {
+            ban[te.to]=te.koma;
+        }
+        // 新しい駒をＨａｓｈに加える
+        KyokumenHashVal^=HashSeed[ban[te.to]][te.to];
+        // 移動先の利きをつける
+        for (i = 0, b = 1, bj = (1<<16); i < 12; i++, b<<=1, bj<<=1) {
+            if (self.can_jump[i][ban[te.to]]) {
+                j = te.to;
+                do {
+                    j += DIRECT[i];
+                    if (s_or_e==KomaInf::Self_) {
+                        self.control_s[j] |= bj;
+                    } else {
+                        self.control_e[j] |= bj;
+                    }
+                } while (ban[j] == KomaInf::EMP);
+            } else if (self.can_move[i][ban[te.to]]) {
+                if (s_or_e==KomaInf::Self_) {
+                    self.control_s[te.to+DIRECT[i]] |= b;
+                } else {
+                    self.control_e[te.to+DIRECT[i]] |= b;
+                }
+            }
+        }
+        // 王様の位置は覚えておく。
+        if (te.koma==KomaInf::SOU) {
+            kingS=te.to;
+        }
+        if (te.koma==KomaInf::EOU) {
+            kingE=te.to;
+        }
+        HashVal=KyokumenHashVal^HandHashVal;
+        Tesu++;
+        HashHistory[Tesu]=HashVal;
+        OuteHistory[Tesu]=(s_or_e==KomaInf::Self_)?self.control_s[kingE]:self.control_e[kingS];
+    }
+    */
+
+    /// １章で追加。controlS,controlEの初期化。
+    fn init_control(&mut self) {
         // let dan: usize;
         // let suji: usize;
         let mut i;
@@ -915,9 +1048,6 @@ impl Kyokumen {
             }
         }
     }
-
-    /// TODO １章で追加。controlS,controlEの初期化。
-    fn init_control() {}
 
     /// TODO
     fn utifudume(&mut self, s_or_e: KomaInf, to: USquare, pin: &Pin) -> bool {
