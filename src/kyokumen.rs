@@ -1257,7 +1257,7 @@ impl Kyokumen {
         }
         let to: USquare = (from as ISquare + diff) as usize;
         let dan: usize = to & 0x0f;
-        let fromDan: usize = from & 0x0f;
+        let from_dan: usize = from & 0x0f;
 
         if (pin == 0 || pin == diff || pin == -diff) && !KomaInf::stood(self.ban[to] & s_or_e) {
             if self.ban[from] == KomaInf::SKE && dan <= 2 {
@@ -1279,13 +1279,13 @@ impl Kyokumen {
                 te_top[*te_num as usize] = Te::from_5(from, to, self.ban[from], self.ban[to], 1);
                 *te_num += 1;
             } else {
-                if s_or_e == KomaInf::Self_ && (fromDan <= 3 || dan <= 3) && self.can_promote(from)
+                if s_or_e == KomaInf::Self_ && (from_dan <= 3 || dan <= 3) && self.can_promote(from)
                 {
                     te_top[*te_num as usize] =
                         Te::from_5(from, to, self.ban[from], self.ban[to], 1);
                     *te_num += 1;
                 } else if s_or_e == KomaInf::Enemy
-                    && (fromDan >= 7 || dan >= 7)
+                    && (from_dan >= 7 || dan >= 7)
                     && self.can_promote(from)
                 {
                     te_top[*te_num as usize] =
