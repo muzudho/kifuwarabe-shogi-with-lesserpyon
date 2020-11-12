@@ -12,6 +12,7 @@ use crate::Te;
 use crate::TeNum;
 use crate::USquare;
 use crate::BAN_LEN;
+use crate::HAND_LEN;
 use crate::TE_LEN;
 use crate::{KomaInf, Kyokumen};
 use num_traits::FromPrimitive;
@@ -23,7 +24,7 @@ impl Default for Kyokumen {
             ban: [KomaInf::EMP; BAN_LEN],
             control_s: [0; BAN_LEN],
             control_e: [0; BAN_LEN],
-            hand: [0; KomaInf::EHI as usize + 1 as usize],
+            hand: [0; HAND_LEN],
             tesu: 0,
             king_s: 0,
             king_e: 0,
@@ -82,6 +83,39 @@ impl Kyokumen {
 }
 
 impl Kyokumen {
+    // TODO pub Kyokumen() {}
+    pub fn from_3(tesu: usize, board: [[KomaInf; 9]; 9], motigoma: [usize; HAND_LEN]) -> Self {
+        // self.
+        let mut s = Kyokumen::default();
+
+        s.king_s = 0;
+        s.king_e = 0;
+        s.tesu = tesu;
+        // 盤面をWALL（壁）で埋めておきます。
+        s.banpadding = [KomaInf::Wall; 16];
+        s.ban = [KomaInf::Wall; BAN_LEN];
+        // boardで与えられた局面を設定します。
+        for dan in 1..=9 {
+            for suji in (0x10..=0x90).step_by(0x10) {
+                // 将棋の筋は左から右なので、配列の宣言と逆になるため、筋はひっくり返さないとなりません。
+                s.ban[suji + dan] = board[dan - 1][9 - suji / 0x10];
+                if s.ban[suji + dan] == KomaInf::SOU {
+                    s.king_s = suji + dan;
+                }
+                if s.ban[suji + dan] == KomaInf::EOU {
+                    s.king_e = suji + dan;
+                }
+            }
+        }
+        // 持ち駒はそのまま利用します。
+        for i in 0..=KomaInf::EHI as usize {
+            s.hand[i] = motigoma[i];
+        }
+        // controlS/controlEを初期化します。
+        s.init_control();
+        s
+    }
+
     pub fn search(&self, mut sq: USquare, dir: ISquare) -> USquare {
         while {
             sq = (sq as ISquare + dir) as USquare;
@@ -89,8 +123,7 @@ impl Kyokumen {
         } {}
         return sq;
     }
-    // TODO pub Kyokumen() {}
-    // TODO pub Kyokumen(int tesu,KomaInf ban[9][9],int Motigoma[]){}
+
     pub fn print() {
         /* TODO FPrint(stdout);*/
     }

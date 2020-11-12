@@ -25,6 +25,8 @@ type ISquare = isize;
 
 /// 盤のデータの持ち方☆（＾～＾） パディングの説明とか どっかで読んどけだぜ☆（＾～＾）
 const BAN_LEN: usize = 16 * (9 + 2);
+/// * 王が持ち駒になることはないので、EHIまでで十分です。
+const HAND_LEN: usize = KomaInf::EHI as usize + 1 as usize;
 
 /// れさぴょん はしてないけど、手目の型は明示しとこうぜ☆（＾～＾）
 type TeNum = usize;
@@ -154,7 +156,7 @@ pub struct Kyokumen {
     /// # Tips
     ///
     /// * 王が持ち駒になることはないので、EHIまでで十分です。
-    pub hand: [usize; KomaInf::EHI as usize + 1 as usize],
+    pub hand: [usize; HAND_LEN],
 
     /// この局面の手数です。
     pub tesu: TeNum,
