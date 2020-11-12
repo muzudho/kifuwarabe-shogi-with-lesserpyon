@@ -4,6 +4,8 @@ use crate::koma_moves::CAN_JUMP;
 use crate::koma_moves::CAN_MOVE;
 use crate::koma_moves::CAN_PROMOTE;
 use crate::koma_moves::DIRECT;
+use crate::koma_moves::KOMA_STR;
+use crate::koma_moves::KOMA_STR2;
 use crate::logic::*;
 use crate::ISquare;
 use crate::Kiki;
@@ -1100,55 +1102,62 @@ impl Kyokumen {
     }
 
     /// それっぽく表示する。
-    pub fn  fprint(&self){
+    pub fn fprint(&self) {
+        const NUM_STR9: [&str; 9] = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
+        const NUM_STR18: [&str; 18] = [
+            "一", "二", "三", "四", "五", "六", "七", "八", "九", "10", "11", "12", "13", "14",
+            "15", "16", "17", "18",
+        ];
         let mut x;
         let mut y = 0;
         print!("持ち駒：");
-        x = KomaInf::EHI;
+        x = KomaInf::EHI as usize;
         while x >= KomaInf::EFU as usize {
             if self.hand[x] > 1 {
                 y = 1;
-                print!("{}", komaStr2[x]);
-                print!("{}", "一二三四五六七八九101112131415161718"+2*self.hand[x]-2);
+                print!("{}{}", KOMA_STR2[x], NUM_STR18[2 * self.hand[x] - 2]);
             } else if self.hand[x] == 1 {
                 y = 1;
-                print!("{}", komaStr2[x]);
+                print!("{}", KOMA_STR2[x]);
             }
-            x-=1;
+            x -= 1;
         }
-        if y {
-            fprintf(fp,"\n");
+        if y != 0 {
+            print!("\n");
         } else {
-            fprintf(fp,"なし\n");
+            print!("なし\n");
         }
-        fprintf(fp,"  ９ ８ ７ ６ ５ ４ ３ ２ １ \n");
-        fprintf(fp,"+---------------------------+\n");
-        for(y=1;y<=9;y++) {
-            fprintf(fp,"|");
-            for(x=9;x>=1;x--) {
-                fprintf(fp,komaStr[ban[x*16+y]]);
+        print!("  ９ ８ ７ ６ ５ ４ ３ ２ １ \n");
+        print!("+---------------------------+\n");
+        for y in 1..=9 {
+            print!("|");
+            x = 9;
+            while x >= 1 {
+                print!("{}", KOMA_STR[self.ban[x * 16 + y] as usize]);
+                x -= 1;
             }
-            fprintf(fp,"|%2.2s","一二三四五六七八九" + y*2-2);
-            fprintf(fp,"\n");
+            print!("|{}", NUM_STR9[y * 2 - 2]);
+            print!("\n");
         }
-        fprintf(fp,"+---------------------------+\n");
-        fprintf(fp,"持ち駒：");
+        print!("+---------------------------+\n");
+        print!("持ち駒：");
         y = 0;
-        for (x = SHI; x >= SFU; x--) {
-            if (Hand[x] > 1) {
+        x = KomaInf::SHI as usize;
+        while x >= KomaInf::SFU as usize {
+            if self.hand[x] > 1 {
                 y = 1;
-                fprintf(fp,"%s%2.2s", komaStr2[x], "一二三四五六七八九101112131415161718"+2*Hand[x]-2);
-            } else if (Hand[x] == 1) {
+                print!("{}{}", KOMA_STR2[x], NUM_STR18[2 * self.hand[x] - 2]);
+            } else if self.hand[x] == 1 {
                 y = 1;
-                fprintf(fp,"%s", komaStr2[x]);
+                print!("{}", KOMA_STR2[x]);
             }
+            x -= 1;
         }
-        if (y) {
-            fprintf(fp,"\n");
+        if y != 0 {
+            print!("\n");
         } else {
-            fprintf(fp,"なし\n");
+            print!("なし\n");
         }
-    
     }
 
     /* TODO
