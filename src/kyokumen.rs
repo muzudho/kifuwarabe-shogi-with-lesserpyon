@@ -14,7 +14,7 @@ use crate::USquare;
 use crate::BAN_LEN;
 use crate::HAND_LEN;
 use crate::TE_LEN;
-use crate::{KomaInf,KomaInfo, Kyokumen};
+use crate::{KomaInf, KomaInfo, Kyokumen};
 use num_traits::FromPrimitive;
 
 impl Default for Kyokumen {
@@ -177,44 +177,46 @@ impl Kyokumen {
 
     /// TODO 手で局面を進める
     pub fn move_(&mut self, s_or_e: KomaInf, te: &Te) {
-        let i;
-        let mut j :USquare;
-        let b;
-        let bj;
-        if te.from>0x10 {
+        let mut i;
+        let mut j: USquare;
+        let mut b;
+        let mut bj;
+        if te.from > 0x10 {
             // 元いた駒のコントロールを消す
-            let dir=0;
-            b=1;
-            bj=1<<16;
-            while dir<12 {
-                if s_or_e==KomaInf::Self_ {
-                    self.control_s[(te.from as isize + DIRECT[dir]) as usize] &= !b; // binary反転
+            let mut dir = 0;
+            b = 1;
+            bj = 1 << 16;
+            while dir < 12 {
+                if s_or_e == KomaInf::Self_ {
+                    self.control_s[(te.from as isize + DIRECT[dir]) as usize] &= !b;
+                // binary反転
                 } else {
-                    self.control_e[(te.from as isize + DIRECT[dir]) as usize] &= !b; // binary反転
+                    self.control_e[(te.from as isize + DIRECT[dir]) as usize] &= !b;
+                    // binary反転
                 }
                 if CAN_JUMP[dir as usize][te.koma as usize] != 0 {
                     j = te.from as USquare;
                     while {
                         j = (j as isize + DIRECT[dir]) as usize;
-                        if s_or_e==KomaInf::Self_ {
-                            self.control_s[j] &= !bj;// binary反転
+                        if s_or_e == KomaInf::Self_ {
+                            self.control_s[j] &= !bj; // binary反転
                         } else {
-                            self.control_e[j] &= !bj;// binary反転
+                            self.control_e[j] &= !bj; // binary反転
                         }
                         self.ban[j] == KomaInf::EMP
-                    } {};
+                    } {}
                 }
-                dir+=1;
-                b<<=1;
-                bj<<=1;
+                dir += 1;
+                b <<= 1;
+                bj <<= 1;
             }
             // 元いた位置は空白になる
-            self.ban[te.from as usize]=KomaInf::EMP;
+            self.ban[te.from as usize] = KomaInf::EMP;
             // 飛び利きを伸ばす
             i = 0;
-            bj = 1<<16;
-            while i < 8  {
-                let dir:ISquare=DIRECT[i];
+            bj = 1 << 16;
+            while i < 8 {
+                let dir: ISquare = DIRECT[i];
                 if (self.control_s[te.from as usize] & bj).stood() {
                     j = te.from as USquare;
                     while {
@@ -229,117 +231,122 @@ impl Kyokumen {
                         j = (j as ISquare + dir) as USquare;
                         self.control_e[j] |= bj;
                         self.ban[j] == KomaInf::EMP
-                    } {};
+                    } {}
                 }
-                i+= 1;
-                bj<<=1;
+                i += 1;
+                bj <<= 1;
             }
         } else {
             // 持ち駒から一枚減らす
-            self.hand[te.koma as usize]-=1;
+            self.hand[te.koma as usize] -= 1;
         }
-        if self.ban[te.to as usize]!=KomaInf::EMP {
+        if self.ban[te.to as usize] != KomaInf::EMP {
             // 相手の駒を持ち駒にする。
             // 持ち駒にする時は、成っている駒も不成りに戻す。（&~PROMOTED）
-            self.hand[(s_or_e|(self.ban[te.to as usize] & !KomaInfo::Promoted.to_koma_inf() & !KomaInf::Self_ & !KomaInf::Enemy)) as usize]+=1;
+            self.hand[(s_or_e
+                | (self.ban[te.to as usize]
+                    & !KomaInfo::Promoted.to_koma_inf()
+                    & !KomaInf::Self_
+                    & !KomaInf::Enemy)) as usize] += 1;
             //取った駒の効きを消す
             i = 0;
             b = 1;
-            bj = 1<<16;
+            bj = 1 << 16;
             while i < 12 {
-                let dir=DIRECT[i];
+                let dir = DIRECT[i];
                 if CAN_JUMP[i][self.ban[te.to as usize] as usize] != 0 {
                     j = te.to as USquare;
                     while {
                         j = (j as ISquare + dir) as USquare;
-                        if s_or_e==KomaInf::Self_ {
+                        if s_or_e == KomaInf::Self_ {
                             self.control_e[j] &= !bj; // binary反転
                         } else {
                             self.control_s[j] &= !bj; // binary反転
                         }
                         self.ban[j] == KomaInf::EMP
-                    } {};
+                    } {}
                 } else {
-                    j= (te.to as ISquare + dir) as USquare;
-                    if s_or_e==KomaInf::Self_ {
-                        self.control_e[j] &= !b;// binary反転
+                    j = (te.to as ISquare + dir) as USquare;
+                    if s_or_e == KomaInf::Self_ {
+                        self.control_e[j] &= !b; // binary反転
                     } else {
-                        self.control_s[j] &= !b;// binary反転
+                        self.control_s[j] &= !b; // binary反転
                     }
                 }
-                i+=1;
-                b<<=1;
-                bj<<=1;
+                i += 1;
+                b <<= 1;
+                bj <<= 1;
             }
         } else {
             // 移動先で遮った飛び利きを消す
             i = 0;
-            bj = 1<<16;
+            bj = 1 << 16;
             while i < 8 {
-                let dir=DIRECT[i];
-                if self.control_s[te.to as usize] & bj {
+                let dir = DIRECT[i];
+                if (self.control_s[te.to as usize] & bj).stood() {
                     j = te.to as USquare;
                     while {
                         j = (j as ISquare + dir) as USquare;
-                        self.control_s[j] &= ~bj;
+                        self.control_s[j] &= !bj; // binary反転
                         self.ban[j] == KomaInf::EMP
                     } {}
                 }
-                if self.control_e[te.to as usize] & bj {
+                if (self.control_e[te.to as usize] & bj).stood() {
                     j = te.to as USquare;
                     while {
                         j = (j as ISquare + dir) as USquare;
-                        self.control_e[j] &= ~bj;
+                        self.control_e[j] &= !bj; // binary反転
                         self.ban[j] == KomaInf::EMP
                     } {}
                 }
 
-                i+=1;
-                bj<<=1;
+                i += 1;
+                bj <<= 1;
             }
         }
         if te.promote != 0 {
-            self.ban[te.to as usize]=KomaInf::from_u8( te.koma|KomaInfo::Promoted as u8).unwrap();
+            self.ban[te.to as usize] =
+                KomaInf::from_u8(te.koma | KomaInfo::Promoted as u8).unwrap();
         } else {
-            self.ban[te.to as usize]=KomaInf::from_u8( te.koma).unwrap();
+            self.ban[te.to as usize] = KomaInf::from_u8(te.koma).unwrap();
         }
         // 移動先の利きをつける
         i = 0;
         b = 1;
-        bj = 1<<16;
-        for  i < 12 {
-            if self.can_jump[i][ban[te.to]] {
-                j = te.to;
+        bj = 1 << 16;
+        while i < 12 {
+            if CAN_JUMP[i][self.ban[te.to as usize] as usize] != 0 {
+                j = te.to as USquare;
                 while {
-                    j += DIRECT[i];
-                    if s_or_e==KomaInf::Self_ {
+                    j = (j as ISquare + DIRECT[i]) as USquare;
+                    if s_or_e == KomaInf::Self_ {
                         self.control_s[j] |= bj;
                     } else {
                         self.control_e[j] |= bj;
                     }
-                    ban[j] == KomaInf::EMP
+                    self.ban[j] == KomaInf::EMP
                 } {}
-            } else if (CanMove[i][ban[te.to]]) {
-                if s_or_e==KomaInf::Self_ {
-                    self.control_s[te.to+DIRECT[i]] |= b;
+            } else if CAN_MOVE[i][self.ban[te.to as usize] as usize] != 0 {
+                if s_or_e == KomaInf::Self_ {
+                    self.control_s[(te.to as ISquare + DIRECT[i]) as usize] |= b;
                 } else {
-                    self.control_e[te.to+DIRECT[i]] |= b;
+                    self.control_e[(te.to as ISquare + DIRECT[i]) as usize] |= b;
                 }
             }
-            i+=1;
-            b<<=1;
-            bj<<=1;
+            i += 1;
+            b <<= 1;
+            bj <<= 1;
         }
         // 王様の位置は覚えておく。
-        if te.koma==KomaInf::SOU {
-            kingS=te.to;
+        if te.koma == KomaInf::SOU as u8 {
+            self.king_s = te.to as Kiki;
         }
-        if te.koma==KomaInf::EOU {
-            kingE=te.to;
+        if te.koma == KomaInf::EOU as u8 {
+            self.king_e = te.to as Kiki;
         }
-    
-        Tesu++;
-            /*
+
+        self.tesu += 1;
+        /*
         let i;
         let mut j :USquare;
         let b;
