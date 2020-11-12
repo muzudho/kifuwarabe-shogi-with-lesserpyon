@@ -168,6 +168,8 @@ pub struct Kyokumen {
     /// 敵玉の位置
     pub king_e: Kiki,
 
+    /// 成ることが出来る駒か？
+    pub can_promote: [isize; 64],
     /// その方向に動けるか？その方向に飛んで動くものは入れてはいけない。
     pub can_move: [[isize; 64]; 12],
     /// その方向に飛んで動くことが出来るか？

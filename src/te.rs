@@ -18,6 +18,12 @@ impl Default for Te {
 }
 
 impl Te {
+    pub fn from_4(f: USquare, t: USquare, k: KomaInf, c: KomaInf) -> Self {
+        Te::from_7(f, t, k, c, 0, 0, 0)
+    }
+    pub fn from_5(f: USquare, t: USquare, k: KomaInf, c: KomaInf, p: u8) -> Self {
+        Te::from_7(f, t, k, c, p, 0, 0)
+    }
     pub fn from_7(f: USquare, t: USquare, ko: KomaInf, c: KomaInf, p: u8, ki: u8, v: i16) -> Self {
         Te {
             from: f as u8,
@@ -27,17 +33,6 @@ impl Te {
             promote: p,
             kind: ki,
             value: v,
-        }
-    }
-    pub fn from_4(f: USquare, t: USquare, k: KomaInf, c: KomaInf) -> Self {
-        Te {
-            from: f as u8,
-            to: t as u8,
-            koma: k as u8,
-            capture: c as u8,
-            promote: 0,
-            kind: 0,
-            value: 0,
         }
     }
     pub fn is_null(&self) -> bool {

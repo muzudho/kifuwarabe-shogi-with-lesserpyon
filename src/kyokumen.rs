@@ -24,19 +24,38 @@ impl Default for Kyokumen {
             tesu: 0,
             king_s: 0,
             king_e: 0,
+            // 成ることが出来る駒か？
+            can_promote: [
+                // 'Cascadia Code' のような 等幅フォント にしても桁揃えがずれるぜ☆（＾～＾）
+                // プロポーショナル・フォントなアルファベットを使う海外に 方眼紙 の文化は無いのだろう☆（＾～＾）
+                // ちょっとずつ だんだんずれてくる……、仕方ない 横幅を長く取って ずれ を目立たなくさせるか……☆（＾～＾）
+                //
+                // 桁揃えって何？　だって☆（＾～＾）！？
+                // おいお前、PC9801 の画面の　漢字とアルファベットが混合しても等幅なのを見てこいだぜ☆ｍ９（＾～＾）！
+                // 暴れたろ☆（＾～＾）！
+                //
+                // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
+                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
+                // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
+                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
+                // 空 , △歩   , △香   , △桂    , △銀   , △金   , △角   , △飛   ,
+                0_____, 1_____, 1_____, 1_____, 1_____, 0_____, 1_____, 1_____, //
+                // △王, △と   , △杏   , △圭    , △全   , △金   , △馬   , △龍   ,
+                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
+                // 空 , ▼歩   , ▼香   , ▼桂    , ▼銀   , ▼金   , ▼角   , ▼飛   ,
+                0_____, 1_____, 1_____, 1_____, 1_____, 0_____, 1_____, 1_____, //
+                // ▼王, ▼と   , ▼杏   , ▼圭    , ▼全   , ▼金   , ▼馬   , ▼龍   ,
+                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
+                // ▼壁, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
+                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
+                // ▼空, ▼空   , ▼空   , ▼空    , ▼空   , ▼空   , ▼空   , ▼空   ,
+                0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
+            ],
             can_move: [
                 // DIRECT[0]=17,
                 // |／
                 //  ￣
                 [
-                    // 'Cascadia Code' のような 等幅フォント にしても桁揃えがずれるぜ☆（＾～＾）
-                    // プロポーショナル・フォントなアルファベットを使う海外に 方眼紙 の文化は無いのだろう☆（＾～＾）
-                    // ちょっとずつ だんだんずれてくる……、仕方ない 横幅を長く取って ずれ を目立たなくさせるか……☆（＾～＾）
-                    //
-                    // 桁揃えって何？　だって☆（＾～＾）！？
-                    // おいお前、PC9801 の画面の　漢字とアルファベットが混合しても等幅なのを見てこいだぜ☆ｍ９（＾～＾）！
-                    // 暴れたろ☆（＾～＾）！
-                    //
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
                     0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, 0_____, //
                     // 空 , 空    , 空    , 空     , 空    , 空    , 空    , 空    ,
@@ -559,6 +578,9 @@ impl Kyokumen {
     }
     pub fn can_jump(&self, dir: usize, sq: USquare) -> bool {
         self.can_jump[dir][self.ban[sq] as usize] != 0
+    }
+    pub fn can_promote(&self, sq: USquare) -> bool {
+        self.can_promote[self.ban[sq] as usize] != 0
     }
     pub fn get_koma_by_offset_sq(&self, absolute_sq: USquare, relative_sq: ISquare) -> KomaInf {
         self.ban[Kyokumen::get_offset_sq(absolute_sq, relative_sq)]
@@ -1219,7 +1241,7 @@ impl Kyokumen {
     ) {
     }
 
-    /// TODO
+    /// TODO 手の生成：成り・不成りも意識して、駒の動く手を生成する。
     fn add_move(
         &self,
         s_or_e: KomaInf,
@@ -1230,5 +1252,50 @@ impl Kyokumen {
         pin: ISquare,
         r_pin: ISquare, /* =0 */
     ) {
+        if r_pin == diff || r_pin == -diff {
+            return;
+        }
+        let to: USquare = (from as ISquare + diff) as usize;
+        let dan: usize = to & 0x0f;
+        let fromDan: usize = from & 0x0f;
+
+        if (pin == 0 || pin == diff || pin == -diff) && !KomaInf::stood(self.ban[to] & s_or_e) {
+            if self.ban[from] == KomaInf::SKE && dan <= 2 {
+                // 必ず成る
+                te_top[*te_num as usize] = Te::from_5(from, to, self.ban[from], self.ban[to], 1);
+                *te_num += 1;
+            } else if (self.ban[from] == KomaInf::SFU || self.ban[from] == KomaInf::SKY) && dan <= 1
+            {
+                // 必ず成る
+                te_top[*te_num as usize] = Te::from_5(from, to, self.ban[from], self.ban[to], 1);
+                *te_num += 1;
+            } else if self.ban[from] == KomaInf::EKE && dan >= 8 {
+                // 必ず成る
+                te_top[*te_num as usize] = Te::from_5(from, to, self.ban[from], self.ban[to], 1);
+                *te_num += 1;
+            } else if (self.ban[from] == KomaInf::EFU || self.ban[from] == KomaInf::EKY) && dan >= 9
+            {
+                // 必ず成る
+                te_top[*te_num as usize] = Te::from_5(from, to, self.ban[from], self.ban[to], 1);
+                *te_num += 1;
+            } else {
+                if s_or_e == KomaInf::Self_ && (fromDan <= 3 || dan <= 3) && self.can_promote(from)
+                {
+                    te_top[*te_num as usize] =
+                        Te::from_5(from, to, self.ban[from], self.ban[to], 1);
+                    *te_num += 1;
+                } else if s_or_e == KomaInf::Enemy
+                    && (fromDan >= 7 || dan >= 7)
+                    && self.can_promote(from)
+                {
+                    te_top[*te_num as usize] =
+                        Te::from_5(from, to, self.ban[from], self.ban[to], 1);
+                    *te_num += 1;
+                }
+                // 成らない手も生成する。
+                te_top[*te_num as usize] = Te::from_5(from, to, self.ban[from], self.ban[to], 0);
+                *te_num += 1;
+            }
+        }
     }
 }
