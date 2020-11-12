@@ -1047,15 +1047,56 @@ impl Kyokumen {
         }
     }
 
-    /// TODO toに駒を打つ手の生成
+    /// TODO ある場所（to）に駒を打つ手の生成
     fn put_to(
-        &self,
+        &mut self,
         s_or_e: KomaInf,
         te_num: &mut TeNum,
-        te_top: &[Te; TE_LEN],
+        te_top: &mut [Te; 512],
         to: USquare,
         pin: &Pin,
     ) {
+        let mut dan: usize = to & 0x0f;
+        if s_or_e == KomaInf::Enemy {
+            dan = 10 - dan;
+        }
+        if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 && dan > 1 {
+            // 歩を打つ手を生成
+            // 二歩チェック
+            let suji: usize = to & 0xf0;
+            let mut nifu = false;
+            for d in 1..=9 {
+                if self.ban[suji + d] == (s_or_e | KomaInf::FU) {
+                    nifu = true;
+                    break;
+                }
+            }
+            // 打ち歩詰めもチェック
+            if !nifu && !self.utifudume(s_or_e, to, pin) {
+                te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::FU, KomaInf::EMP);
+                *te_num += 1;
+            }
+        }
+        if self.hand[(s_or_e | KomaInf::KY) as usize] > 0 && dan > 1 {
+            // 香を打つ手を生成
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KY, KomaInf::EMP);
+            *te_num += 1;
+        }
+        if self.hand[(s_or_e | KomaInf::KE) as usize] > 0 && dan > 2 {
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KE, KomaInf::EMP);
+            *te_num += 1;
+        }
+        for koma in KomaInf::GI as usize..=KomaInf::HI as usize {
+            if self.hand[s_or_e as usize | koma] > 0 {
+                te_top[*te_num as usize] = Te::from_4(
+                    0,
+                    to,
+                    KomaInf::from_usize(s_or_e as usize | koma).unwrap(),
+                    KomaInf::EMP,
+                );
+                *te_num += 1;
+            }
+        }
     }
 
     /// TODO ある場所の利き情報を作成して返す。普段は使わない関数（差分計算しているから）だが、
