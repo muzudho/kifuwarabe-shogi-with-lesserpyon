@@ -10,6 +10,19 @@ pub mod te;
 
 use num_derive::FromPrimitive;
 
+// 非合法な手かどうか判定する関数です。
+fn is_illegal(te: Te, te_num: TeNum, te_buf: &mut [Te; TE_LEN]) -> bool {
+    // 要するに、手の一覧の中にあったら、
+    for i in 0..te_num {
+        if te == te_buf[i] {
+            // Illegalではない、ということでfalseを返します。
+            return false;
+        }
+    }
+    // 手の一覧の中にない手は、違法な手＝指してはいけない手です。
+    return true;
+}
+
 fn main() {
     println!("Kifuwarabe's shogi with Lesserpyon");
     println!(
