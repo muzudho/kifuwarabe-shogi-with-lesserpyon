@@ -1115,7 +1115,7 @@ impl Kyokumen {
         while x >= KomaInf::EFU as usize {
             if self.hand[x] > 1 {
                 y = 1;
-                print!("{}{}", KOMA_STR2[x], NUM_STR18[2 * self.hand[x] - 2]);
+                print!("{}{}", KOMA_STR2[x], NUM_STR18[self.hand[x] - 1]);
             } else if self.hand[x] == 1 {
                 y = 1;
                 print!("{}", KOMA_STR2[x]);
@@ -1136,7 +1136,7 @@ impl Kyokumen {
                 print!("{}", KOMA_STR[self.ban[x * 16 + y] as usize]);
                 x -= 1;
             }
-            print!("|{}", NUM_STR9[y * 2 - 2]);
+            print!("|{}", NUM_STR9[y - 1]);
             print!("\n");
         }
         print!("+---------------------------+\n");
@@ -1146,7 +1146,7 @@ impl Kyokumen {
         while x >= KomaInf::SFU as usize {
             if self.hand[x] > 1 {
                 y = 1;
-                print!("{}{}", KOMA_STR2[x], NUM_STR18[2 * self.hand[x] - 2]);
+                print!("{}{}", KOMA_STR2[x], NUM_STR18[self.hand[x] - 1]);
             } else if self.hand[x] == 1 {
                 y = 1;
                 print!("{}", KOMA_STR2[x]);

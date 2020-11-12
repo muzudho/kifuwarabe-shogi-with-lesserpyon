@@ -1,3 +1,4 @@
+use crate::koma_moves::KOMA_STR2;
 use crate::KomaInf;
 use crate::Te;
 use crate::USquare;
@@ -39,8 +40,21 @@ impl Te {
         return self.from == 0 && self.to == 0;
     }
     /// 手を表示したい時に使います。
-    fn print(&self) {
-        // FPrint(stdout);
+    pub fn print(&self) {
+        print!("{:0>2}", self.to);
+        print!("{:0>2}", KOMA_STR2[self.koma as usize]);
+        if self.promote != 0 {
+            print!("成");
+        }
+        if self.from < KomaInf::OU as u8 {
+            print!("打");
+        } else {
+            print!("({:0>2x})", self.from);
+        }
+
+        if !(self.promote != 0) {
+            print!("　");
+        }
     }
     /*
     /// 同上
