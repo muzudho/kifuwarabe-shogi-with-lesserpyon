@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 num-traits = "0.2.14"
 num-derive = "0.3.3"
+rand = "0.7"

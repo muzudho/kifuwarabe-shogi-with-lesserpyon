@@ -780,7 +780,7 @@ impl Kyokumen {
         &mut self,
         s_or_e: KomaInf,
         te_num: &mut TeNum,
-        te_top: &mut [Te; 512],
+        te_top: &mut [Te; TE_LEN],
         to: USquare,
         pin: &Pin,
     ) {

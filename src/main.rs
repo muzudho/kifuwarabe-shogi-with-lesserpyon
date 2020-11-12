@@ -9,6 +9,7 @@ pub mod logic;
 pub mod te;
 
 use num_derive::FromPrimitive;
+use rand::prelude::*;
 
 // 非合法な手かどうか判定する関数です。
 fn is_illegal(te: Te, te_num: TeNum, te_buf: &mut [Te; TE_LEN]) -> bool {
@@ -21,6 +22,28 @@ fn is_illegal(te: Te, te_num: TeNum, te_buf: &mut [Te; TE_LEN]) -> bool {
     }
     // 手の一覧の中にない手は、違法な手＝指してはいけない手です。
     return true;
+}
+
+struct Sikou {}
+/// 簡単な思考ルーチンです。要するに、合法な手の中から、適当な手を乱数で選んで指すだけです。
+impl Sikou {
+    pub fn think(s_or_e: KomaInf, k: &mut Kyokumen) -> Te {
+        let mut te_buf: [Te; 600] = [Te::default(); 600];
+        let te_num = k.make_legal_moves(s_or_e, &mut te_buf, &mut None);
+
+        /*
+        #ifdef _DEBUG
+            // デバッグの際には、合法手を一覧表示します。
+            for(int i=0;i<te_num;i++) {
+                te_buf[i].print();
+            }
+            printf("\n");
+        #endif
+        */
+
+        let r = random::<usize>() % te_num;
+        return te_buf[r];
+    }
 }
 
 fn main() {
@@ -47,7 +70,7 @@ type TeNum = usize;
 
 /// C++ の れさぴょん は 手の配列の先頭アドレスを指す teBuf を使っていたが、
 /// Rust で可変長を使うとだいぶ別物なんで、 とりあえず固定長の配列にしようぜ☆（＾～＾）？
-const TE_LEN: usize = 512;
+const TE_LEN: usize = 600;
 
 /// Pin.
 ///
@@ -184,6 +207,7 @@ pub struct Kyokumen {
 }
 
 // 手のクラス
+#[derive(Clone, Copy)]
 pub struct Te {
     // どこから・どこへはそれぞれ１Byteであらわせます。
     // 詳しくは局面クラスを参照して下さい。
