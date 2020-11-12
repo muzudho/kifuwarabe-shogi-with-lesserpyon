@@ -346,198 +346,7 @@ impl Kyokumen {
         }
 
         self.tesu += 1;
-        /*
-        let i;
-        let mut j :USquare;
-        let b;
-        let bj;
-        if te.from>0x10 {
-            // 元いた駒のコントロールを消す
-            let dir=0;
-            b=1;
-            bj=1<<16;
-            while dir<12 {
-                if s_or_e==KomaInf::Self_ {
-                    self.control_s[(te.from as isize + DIRECT[dir]) as usize] &= !b; // binary反転
-                } else {
-                    self.control_e[(te.from as isize + DIRECT[dir]) as usize] &= !b; // binary反転
-                }
-                if CAN_JUMP[dir as usize][te.koma as usize] != 0 {
-                    j = te.from as USquare;
-                    while {
-                        j = (j as isize + DIRECT[dir]) as usize;
-                        if s_or_e==KomaInf::Self_ {
-                            self.control_s[j] &= !bj;// binary反転
-                        } else {
-                            self.control_e[j] &= !bj;// binary反転
-                        }
-                        self.ban[j] == KomaInf::EMP
-                    } {};
-                }
-                dir+=1;
-                b<<=1;
-                bj<<=1;
-            }
-            // 元いた位置は空白になる
-            self.ban[te.from as usize]=KomaInf::EMP;
-            // 空白になったことで変わるハッシュ値
-            KyokumenHashVal^=HashSeed[te.koma][te.from];
-            KyokumenHashVal^=HashSeed[KomaInf::EMP][te.from];
-            // 飛び利きを伸ばす
-
-            i = 0;
-            bj = 1<<16;
-            while i < 8  {
-                let dir:ISquare=DIRECT[i];
-                if self.control_s[te.from as usize] & bj {
-                    j = te.from as USquare;
-                    do {
-                        j += dir;
-                        self.control_s[j] |= bj;
-                    } while (ban[j] == KomaInf::EMP);
-                }
-                if self.control_e[te.from as usize] & bj {
-                    j = te.from as USquare;
-                    do {
-                        j += dir;
-                        self.control_e[j] |= bj;
-                    } while (ban[j] == KomaInf::EMP);
-                }
-
-                i+= 1;
-                bj<<=1;
-            }
-        } else {
-            // 持ち駒から一枚減らす
-            HandHashVal^=HandHashSeed[te.koma][self.hand[te.koma]];
-            self.hand[te.koma]--;
-            value-=HandValue[te.koma];
-            value+=KomaValue[te.koma];
-        }
-        if self.ban[te.to as usize]!=KomaInf::EMP {
-            // 相手の駒を持ち駒にする。
-            // 持ち駒にする時は、成っている駒も不成りに戻す。（&~PROMOTED）
-            value-=KomaValue[self.ban[te.to]];
-            value+=HandValue[s_or_e|(self.ban[te.to]&~PROMOTED&~KomaInf::Self_&~ENEMY)];
-            let koma=s_or_e|(self.ban[te.to]&~PROMOTED&~KomaInf::Self_&~ENEMY);
-            self.hand[koma]+=1;
-            // ハッシュに取った駒を加える
-            HandHashVal^=HandHashSeed[koma][self.hand[koma]];
-            //取った駒の効きを消す
-            for (i = 0, b = 1, bj = (1<<16); i < 12; i++, b<<=1, bj<<=1) {
-                int Dir=DIRECT[i];
-                if (self.can_jump[i][ban[te.to]]) {
-                    j = te.to;
-                    do {
-                        j += Dir;
-                        if (s_or_e==KomaInf::Self_) {
-                            self.control_e[j] &= !bj; // binary反転
-                        } else {
-                            self.control_s[j] &= !bj; // binary反転
-                        }
-                    } while (ban[j] == KomaInf::EMP);
-                } else {
-                    j=te.to + Dir;
-                    if (s_or_e==KomaInf::Self_) {
-                        self.control_e[j] &= !b; // binary反転
-                    } else {
-                        self.control_s[j] &= !b; // binary反転
-                    }
-                }
-            }
-        } else {
-            // 移動先で遮った飛び利きを消す
-            i = 0;
-            bj = 1<<16;
-            while i < 8 {
-                let dir=DIRECT[i];
-                if self.control_s[te.to] & bj {
-                    j = te.to as USquare;
-                    while {
-                        j = (j as ISquare + dir) as USquare;
-                        self.control_s[j] &= !bj; // binary反転
-                        self.ban[j] == KomaInf::EMP
-                    } {}
-                }
-                if self.control_e[te.to] & bj {
-                    j = te.to as USquare;
-                    while {
-                        j = (j as ISquare + dir) as USquare;
-                        self.control_e[j] &= !bj; // binary反転
-                        self.ban[j] == KomaInf::EMP
-                    } {}
-                }
-
-                i+=1;
-                bj<<=1;
-            }
-        }
-        // ban[te.to]にあったものをＨａｓｈから消す
-        KyokumenHashVal^=HashSeed[self.ban[te.to]][te.to];
-        if te.promote {
-            value-=KomaValue[te.koma];
-            value+=KomaValue[te.koma|PROMOTED];
-            self.ban[te.to]=te.koma|PROMOTED;
-        } else {
-            self.ban[te.to]=te.koma;
-        }
-        // 新しい駒をＨａｓｈに加える
-        KyokumenHashVal^=HashSeed[ban[te.to]][te.to];
-        // 移動先の利きをつける
-        i = 0;
-        b = 1;
-        bj = 1<<16;
-        while i < 12 {
-            if self.can_jump[i][ban[te.to]] {
-                j = te.to;
-                do {
-                    j += DIRECT[i];
-                    if (s_or_e==KomaInf::Self_) {
-                        self.control_s[j] |= bj;
-                    } else {
-                        self.control_e[j] |= bj;
-                    }
-                } while (ban[j] == KomaInf::EMP);
-            } else if self.can_move[i][ban[te.to]] {
-                if s_or_e==KomaInf::Self_ {
-                    self.control_s[te.to+DIRECT[i]] |= b;
-                } else {
-                    self.control_e[te.to+DIRECT[i]] |= b;
-                }
-            }
-
-            i+=1;
-            b<<=1;
-            bj<<=1;
-        }
-        // 王様の位置は覚えておく。
-        if (te.koma==KomaInf::SOU) {
-            kingS=te.to;
-        }
-        if (te.koma==KomaInf::EOU) {
-            kingE=te.to;
-        }
-        HashVal=KyokumenHashVal^HandHashVal;
-        Tesu++;
-        HashHistory[Tesu]=HashVal;
-        OuteHistory[Tesu]=(s_or_e==KomaInf::Self_)?self.control_s[kingE]:self.control_e[kingS];
-        */
     }
-
-    pub fn search(&self, mut sq: USquare, dir: ISquare) -> USquare {
-        while {
-            sq = (sq as ISquare + dir) as USquare;
-            !self.is_exists(sq)
-        } {}
-        return sq;
-    }
-
-    pub fn print() {
-        /* TODO FPrint(stdout);*/
-    }
-    /*
-    TODO pub fn  FPrint(FILE *fp){}
-    */
     /// ピン（動かすと王を取られてしまうので動きが制限される駒）の状態を設定する
     pub fn make_pin_inf(&self, pin: &mut Pin) {
         // int i;
@@ -729,297 +538,89 @@ impl Kyokumen {
         return te_num;
     }
 
-    /// TODO 王手を受ける手の生成
-    ///
-    /// # Return
-    ///
-    /// * `usize` - 手目。
-    pub fn anti_check(
-        &mut self,
-        s_or_e: KomaInf,
-        te_buf: &mut [Te; TE_LEN],
-        pin: &Pin,
-        kiki: Kiki,
-    ) -> usize {
-        let king: USquare;
-        let mut te_num: TeNum = 0;
-        if (kiki & (kiki - 1)) != 0 {
-            //両王手は玉を動かすしかない
-            self.move_king(s_or_e, &mut te_num, te_buf, kiki);
-        } else {
-            if s_or_e == KomaInf::Self_ {
-                king = self.king_s;
-            } else {
-                king = self.king_e;
-            }
-            let check: USquare;
-            let mut id: usize = 0;
-            while id <= 31 {
-                if kiki == (1usize << id) {
-                    break;
-                }
-                id += 1;
-            }
-            if id < 16 {
-                check = Kyokumen::get_offset_sq(king, DIRECT[id]);
-            } else {
-                check = self.search(king, -DIRECT[id - 16]);
-            }
-            //王手駒を取る
-            self.move_to(s_or_e, &mut te_num, te_buf, check, pin);
-
-            //玉を動かす
-            self.move_king(s_or_e, &mut te_num, te_buf, kiki);
-
-            if id >= 16 {
-                //合駒をする手を生成する
-                let mut i: USquare = Kyokumen::get_offset_sq(king, id as ISquare - 16);
-                while !self.is_exists(i) {
-                    self.move_to(s_or_e, &mut te_num, te_buf, i, pin); //移動合
-                    i = Kyokumen::get_offset_sq(i, id as ISquare - 16);
-                }
-                let mut i: USquare = Kyokumen::get_offset_sq(king, id as ISquare - 16);
-                while !self.is_exists(i) {
-                    self.put_to(s_or_e, &mut te_num, te_buf, i, pin); //駒を打つ合
-                    i = Kyokumen::get_offset_sq(i, id as ISquare - 16);
-                }
-            }
-        }
-        return te_num;
-    }
-
-    /// TODO
-    fn utifudume(&mut self, s_or_e: KomaInf, to: USquare, pin: &Pin) -> bool {
-        if s_or_e == KomaInf::Self_ {
-            // まず、玉の頭に歩を打つ手じゃなければ打ち歩詰めの心配はない。
-            if self.king_e + 1 != to {
-                return false;
-            }
-        } else {
-            // まず、玉の頭に歩を打つ手じゃなければ打ち歩詰めの心配はない。
-            if self.king_s - 1 != to {
-                return false;
-            }
-        }
-        //実際に歩を打って確かめてみる。
-        self.ban[to] = KomaInf::FU | s_or_e;
-        if s_or_e == KomaInf::Self_ {
-            // 自分の利きがあったら相手は玉で取れない　＆　取る動きを列挙してみたら玉で取る手しかない
-            if self.is_control_s(to)
-                && (self.count_move(KomaInf::Enemy, to as ISquare, pin) == 1 << 2)
-            {
-                // 玉に逃げ道があるかどうかをチェック
-                for i in 0..8 {
-                    if !self.is_e(Kyokumen::get_offset_sq(self.king_e, i))
-                        && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, i))
-                    {
-                        // 逃げ道があったので、盤面を元の状態に戻して、
-                        self.ban[to] = KomaInf::EMP;
-                        // 打ち歩詰めではなかった。
-                        return false;
-                    }
-                }
-                // 玉の逃げ道もないのなら、打ち歩詰め。盤面の状態は元に戻す。
-                self.ban[to] = KomaInf::EMP;
-                return true;
-            }
-            // 玉以外で取る手があるので打ち歩詰めではない。
-            self.ban[to] = KomaInf::EMP;
-            return false;
-        } else {
-            // 自分の利きがあったら相手は玉で取れない　＆　取る動きを列挙してみたら玉で取る手しかない
-            if self.is_control_e(to)
-                && (self.count_move(KomaInf::Self_, to as ISquare, pin) == 1 << 6)
-            {
-                // 玉に逃げ道があるかどうかをチェック
-                for i in 0..8 {
-                    if !self.is_s(Kyokumen::get_offset_sq(self.king_s, i))
-                        && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s, i))
-                    {
-                        // 逃げ道があったので、盤面を元の状態に戻して、
-                        self.ban[to] = KomaInf::EMP;
-                        // 打ち歩詰めではなかった。
-                        return false;
-                    }
-                }
-                // 玉の逃げ道もないのなら、打ち歩詰め。盤面の状態は元に戻す。
-                self.ban[to] = KomaInf::EMP;
-                return true;
-            }
-            // 玉以外で取る手があるので打ち歩詰めではない。
-            self.ban[to] = KomaInf::EMP;
-            return false;
-        }
-    }
-
-    /// TODO 玉の動く手の生成
-    fn move_king(
+    /// TODO 盤面のfromにある駒を動かす手を生成する。
+    fn add_moves(
         &self,
         s_or_e: KomaInf,
         te_num: &mut TeNum,
         te_top: &mut [Te; TE_LEN],
-        kiki: Kiki,
+        from: USquare,
+        pin: ISquare,
+        r_pin: ISquare, /* =0 */
     ) {
-        let mut id: Option<USquare> = None; //隣接王手駒の位置のid
-
-        // 両王手でないなら王手駒の位置を探す
-        for i in 0..8 {
-            if (kiki & (1 << i)) != 0 {
-                id = Some(i);
-                break;
+        use crate::KomaInf::*;
+        match self.ban[from] {
+            SFU => self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin),
+            EFU => self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin),
+            SKY => self.add_straight(s_or_e, te_num, te_top, from, -1, pin, r_pin),
+            EKY => self.add_straight(s_or_e, te_num, te_top, from, 1, pin, r_pin),
+            SKE => {
+                self.add_move(s_or_e, te_num, te_top, from, 14, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -18, pin, r_pin);
             }
-        }
-        if let Some(id) = id {
-            // 隣接の王手 最初に取る手を生成するのだ
-            if s_or_e == KomaInf::Self_ {
-                let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_s, id as isize)];
-                if ( koma==KomaInf::EMP || (koma & KomaInf::Enemy).stood())
-                    && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s,id as isize)) //敵の駒が効いていない
-                    && !(kiki & (1 << (23-id))).stood()
-                //敵の飛駒で貫かれていない
-                {
-                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[id], 0, 0);
-                }
-            } else {
-                let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_e, id as isize)];
-                if ( koma==KomaInf::EMP || (koma & KomaInf::Self_).stood())
-                    && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, id as isize)) //敵の駒が効いていない
-                    && !(kiki & (1 << (23-id))).stood()
-                //敵の飛駒で貫かれていない
-                {
-                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[id], 0, 0);
-                }
+            EKE => {
+                self.add_move(s_or_e, te_num, te_top, from, -14, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 18, pin, r_pin);
             }
-        }
-
-        for i in 0..8 {
-            if Some(i) == id {
-                continue;
+            SGI => {
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
             }
-            if s_or_e == KomaInf::Self_ {
-                let koma: KomaInf =
-                    self.ban[(self.king_s as ISquare - DIRECT[i as usize]) as usize];
-                if ( koma==KomaInf::EMP || (koma & KomaInf::Enemy).stood())
-                    && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s, i as isize)) //敵の駒が効いていない
-                    && !(kiki & (1 << (23-i))).stood()
-                //敵の飛駒で貫かれていない
-                {
-                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[i], 0, 0);
-                }
-            } else {
-                let koma: KomaInf =
-                    self.ban[(self.king_e as ISquare - DIRECT[i as usize]) as usize];
-                if ( koma==KomaInf::EMP || (koma & KomaInf::Self_).stood())
-                        && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, i as isize)) //敵の駒が効いていない
-                        && !(kiki & (1 << (23-i))).stood()
-                //敵の飛駒で貫かれていない
-                {
-                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[i], 0, 0);
-                }
+            EGI => {
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
             }
-        }
-    }
-
-    /// TODO toに動く手の生成
-    fn move_to(
-        &mut self,
-        s_or_e: KomaInf,
-        te_num: &mut TeNum,
-        te_top: &mut [Te; TE_LEN],
-        to: USquare,
-        pin: &Pin,
-    ) {
-        let mut dan: USquare = to & 0x0f;
-        if s_or_e == KomaInf::Enemy {
-            dan = 10 - dan;
-        }
-        if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 && dan > 1 {
-            // 歩を打つ手を生成
-            // 二歩チェック
-            let suji: USquare = to & 0xf0;
-            let mut nifu: bool = false;
-            for d in 1..=9 {
-                if self.ban[suji + d] == s_or_e | KomaInf::FU {
-                    nifu = true;
-                    break;
-                }
+            SKI | STO | SNY | SNK | SNG => {
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
             }
-            // 打ち歩詰めもチェック
-            if !nifu && !self.utifudume(s_or_e, to, pin) {
-                te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::FU, KomaInf::EMP);
-                *te_num += 1;
+            EKI | ETO | ENY | ENK | ENG => {
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
             }
-        }
-        if self.hand[(s_or_e | KomaInf::KY) as usize] > 0 && dan > 1 {
-            // 香を打つ手を生成
-            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KY, KomaInf::EMP);
-            *te_num += 1;
-        }
-        if self.hand[(s_or_e | KomaInf::KE) as usize] > 0 && dan > 2 {
-            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KE, KomaInf::EMP);
-            *te_num += 1;
-        }
-        for koma in KomaInf::GI as usize..=KomaInf::HI as usize {
-            if self.hand[s_or_e as usize | koma as usize] > 0 {
-                te_top[*te_num as usize] = Te::from_4(
-                    0,
-                    to,
-                    KomaInf::from_usize(s_or_e as usize | koma as usize).unwrap(),
-                    KomaInf::EMP,
-                );
-                *te_num += 1;
+            SRY | ERY => {
+                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
             }
-        }
-    }
-
-    /// TODO ある場所（to）に駒を打つ手の生成
-    fn put_to(
-        &mut self,
-        s_or_e: KomaInf,
-        te_num: &mut TeNum,
-        te_top: &mut [Te; 512],
-        to: USquare,
-        pin: &Pin,
-    ) {
-        let mut dan: usize = to & 0x0f;
-        if s_or_e == KomaInf::Enemy {
-            dan = 10 - dan;
-        }
-        if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 && dan > 1 {
-            // 歩を打つ手を生成
-            // 二歩チェック
-            let suji: usize = to & 0xf0;
-            let mut nifu = false;
-            for d in 1..=9 {
-                if self.ban[suji + d] == (s_or_e | KomaInf::FU) {
-                    nifu = true;
-                    break;
-                }
+            SHI | EHI => {
+                self.add_straight(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -1, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, 16, pin, r_pin);
             }
-            // 打ち歩詰めもチェック
-            if !nifu && !self.utifudume(s_or_e, to, pin) {
-                te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::FU, KomaInf::EMP);
-                *te_num += 1;
+            SUM | EUM => {
+                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
+                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
             }
-        }
-        if self.hand[(s_or_e | KomaInf::KY) as usize] > 0 && dan > 1 {
-            // 香を打つ手を生成
-            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KY, KomaInf::EMP);
-            *te_num += 1;
-        }
-        if self.hand[(s_or_e | KomaInf::KE) as usize] > 0 && dan > 2 {
-            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KE, KomaInf::EMP);
-            *te_num += 1;
-        }
-        for koma in KomaInf::GI as usize..=KomaInf::HI as usize {
-            if self.hand[s_or_e as usize | koma] > 0 {
-                te_top[*te_num as usize] = Te::from_4(
-                    0,
-                    to,
-                    KomaInf::from_usize(s_or_e as usize | koma).unwrap(),
-                    KomaInf::EMP,
-                );
-                *te_num += 1;
+            SKA | EKA => {
+                self.add_straight(s_or_e, te_num, te_top, from, 17, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -17, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+                self.add_straight(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+            }
+            SOU | EOU => {
+                self.move_king(s_or_e, te_num, te_top, 0); // 王手がかかっている時には、AntiCheckの方が呼ばれるから、Kikiは０です。
+            }
+            _ => {
+                panic!("Unimplemented Koma. {:?}", self.ban[from]);
             }
         }
     }
@@ -1108,122 +709,258 @@ impl Kyokumen {
         return ret;
     }
 
-    /// TODO 盤面のfromにある駒を動かす手を生成する。
-    fn add_moves(
-        &self,
-        s_or_e: KomaInf,
-        te_num: &mut TeNum,
-        te_top: &mut [Te; TE_LEN],
-        from: USquare,
-        pin: ISquare,
-        r_pin: ISquare, /* =0 */
-    ) {
-        use crate::KomaInf::*;
-        match self.ban[from] {
-            SFU => self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin),
-            EFU => self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin),
-            SKY => self.add_straight(s_or_e, te_num, te_top, from, -1, pin, r_pin),
-            EKY => self.add_straight(s_or_e, te_num, te_top, from, 1, pin, r_pin),
-            SKE => {
-                self.add_move(s_or_e, te_num, te_top, from, 14, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -18, pin, r_pin);
+    /// 打ち歩詰めの判定
+    fn utifudume(&mut self, s_or_e: KomaInf, to: USquare, pin: &Pin) -> bool {
+        if s_or_e == KomaInf::Self_ {
+            // まず、玉の頭に歩を打つ手じゃなければ打ち歩詰めの心配はない。
+            if self.king_e + 1 != to {
+                return false;
             }
-            EKE => {
-                self.add_move(s_or_e, te_num, te_top, from, -14, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 18, pin, r_pin);
+        } else {
+            // まず、玉の頭に歩を打つ手じゃなければ打ち歩詰めの心配はない。
+            if self.king_s - 1 != to {
+                return false;
             }
-            SGI => {
-                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
+        }
+        //実際に歩を打って確かめてみる。
+        self.ban[to] = KomaInf::FU | s_or_e;
+        if s_or_e == KomaInf::Self_ {
+            // 自分の利きがあったら相手は玉で取れない　＆　取る動きを列挙してみたら玉で取る手しかない
+            if self.is_control_s(to)
+                && (self.count_move(KomaInf::Enemy, to as ISquare, pin) == 1 << 2)
+            {
+                // 玉に逃げ道があるかどうかをチェック
+                for i in 0..8 {
+                    if !self.is_e(Kyokumen::get_offset_sq(self.king_e, i))
+                        && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, i))
+                    {
+                        // 逃げ道があったので、盤面を元の状態に戻して、
+                        self.ban[to] = KomaInf::EMP;
+                        // 打ち歩詰めではなかった。
+                        return false;
+                    }
+                }
+                // 玉の逃げ道もないのなら、打ち歩詰め。盤面の状態は元に戻す。
+                self.ban[to] = KomaInf::EMP;
+                return true;
             }
-            EGI => {
-                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
+            // 玉以外で取る手があるので打ち歩詰めではない。
+            self.ban[to] = KomaInf::EMP;
+            return false;
+        } else {
+            // 自分の利きがあったら相手は玉で取れない　＆　取る動きを列挙してみたら玉で取る手しかない
+            if self.is_control_e(to)
+                && (self.count_move(KomaInf::Self_, to as ISquare, pin) == 1 << 6)
+            {
+                // 玉に逃げ道があるかどうかをチェック
+                for i in 0..8 {
+                    if !self.is_s(Kyokumen::get_offset_sq(self.king_s, i))
+                        && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s, i))
+                    {
+                        // 逃げ道があったので、盤面を元の状態に戻して、
+                        self.ban[to] = KomaInf::EMP;
+                        // 打ち歩詰めではなかった。
+                        return false;
+                    }
+                }
+                // 玉の逃げ道もないのなら、打ち歩詰め。盤面の状態は元に戻す。
+                self.ban[to] = KomaInf::EMP;
+                return true;
             }
-            SKI | STO | SNY | SNK | SNG => {
-                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
-            }
-            EKI | ETO | ENY | ENK | ENG => {
-                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
-            }
-            SRY | ERY => {
-                self.add_move(s_or_e, te_num, te_top, from, 17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -15, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -17, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 15, pin, r_pin);
-            }
-            SHI | EHI => {
-                self.add_straight(s_or_e, te_num, te_top, from, 1, pin, r_pin);
-                self.add_straight(s_or_e, te_num, te_top, from, -1, pin, r_pin);
-                self.add_straight(s_or_e, te_num, te_top, from, -16, pin, r_pin);
-                self.add_straight(s_or_e, te_num, te_top, from, 16, pin, r_pin);
-            }
-            SUM | EUM => {
-                self.add_move(s_or_e, te_num, te_top, from, 1, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, 16, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -16, pin, r_pin);
-                self.add_move(s_or_e, te_num, te_top, from, -1, pin, r_pin);
-            }
-            SKA | EKA => {
-                self.add_straight(s_or_e, te_num, te_top, from, 17, pin, r_pin);
-                self.add_straight(s_or_e, te_num, te_top, from, -17, pin, r_pin);
-                self.add_straight(s_or_e, te_num, te_top, from, 15, pin, r_pin);
-                self.add_straight(s_or_e, te_num, te_top, from, -15, pin, r_pin);
-            }
-            SOU | EOU => {
-                self.move_king(s_or_e, te_num, te_top, 0); // 王手がかかっている時には、AntiCheckの方が呼ばれるから、Kikiは０です。
-            }
-            _ => {
-                panic!("Unimplemented Koma. {:?}", self.ban[from]);
-            }
+            // 玉以外で取る手があるので打ち歩詰めではない。
+            self.ban[to] = KomaInf::EMP;
+            return false;
         }
     }
-    /// TODO 飛車角香車がまっすぐに進む手の生成
-    fn add_straight(
-        &self,
+
+    /// TODO ある場所（to）に駒を打つ手の生成
+    fn put_to(
+        &mut self,
         s_or_e: KomaInf,
         te_num: &mut TeNum,
-        te_top: &mut [Te; TE_LEN],
-        from: USquare,
-        dir: ISquare,
-        pin: ISquare,
-        r_pin: ISquare, /* =0 */
+        te_top: &mut [Te; 512],
+        to: USquare,
+        pin: &Pin,
     ) {
-        if dir == r_pin || dir == -r_pin {
-            return;
+        let mut dan: usize = to & 0x0f;
+        if s_or_e == KomaInf::Enemy {
+            dan = 10 - dan;
         }
-        let mut i: isize;
-        if pin == 0 || pin == dir || pin == -dir {
-            // 空白の間、動く手を生成する
-            i = dir;
-            while self.ban[(from as isize + i) as usize] == KomaInf::EMP {
-                self.add_move(s_or_e, te_num, te_top, from, i, 0, 0);
-                i += dir;
+        if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 && dan > 1 {
+            // 歩を打つ手を生成
+            // 二歩チェック
+            let suji: usize = to & 0xf0;
+            let mut nifu = false;
+            for d in 1..=9 {
+                if self.ban[suji + d] == (s_or_e | KomaInf::FU) {
+                    nifu = true;
+                    break;
+                }
             }
-            // 味方の駒でないなら、そこへ動く
-            if !((self.ban[(from as isize + i) as usize] & s_or_e).stood()) {
-                self.add_move(s_or_e, te_num, te_top, from, i, 0, 0);
+            // 打ち歩詰めもチェック
+            if !nifu && !self.utifudume(s_or_e, to, pin) {
+                te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::FU, KomaInf::EMP);
+                *te_num += 1;
+            }
+        }
+        if self.hand[(s_or_e | KomaInf::KY) as usize] > 0 && dan > 1 {
+            // 香を打つ手を生成
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KY, KomaInf::EMP);
+            *te_num += 1;
+        }
+        if self.hand[(s_or_e | KomaInf::KE) as usize] > 0 && dan > 2 {
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KE, KomaInf::EMP);
+            *te_num += 1;
+        }
+        for koma in KomaInf::GI as usize..=KomaInf::HI as usize {
+            if self.hand[s_or_e as usize | koma] > 0 {
+                te_top[*te_num as usize] = Te::from_4(
+                    0,
+                    to,
+                    KomaInf::from_usize(s_or_e as usize | koma).unwrap(),
+                    KomaInf::EMP,
+                );
+                *te_num += 1;
             }
         }
     }
 
-    /// TODO 手の生成：成り・不成りも意識して、駒の動く手を生成する。
+    pub fn search(&self, mut sq: USquare, dir: ISquare) -> USquare {
+        while {
+            sq = (sq as ISquare + dir) as USquare;
+            !self.is_exists(sq)
+        } {}
+        return sq;
+    }
+
+    /// TODO 王手を受ける手の生成
+    ///
+    /// # Return
+    ///
+    /// * `usize` - 手目。
+    pub fn anti_check(
+        &mut self,
+        s_or_e: KomaInf,
+        te_buf: &mut [Te; TE_LEN],
+        pin: &Pin,
+        kiki: Kiki,
+    ) -> usize {
+        let king: USquare;
+        let mut te_num: TeNum = 0;
+        if (kiki & (kiki - 1)) != 0 {
+            //両王手は玉を動かすしかない
+            self.move_king(s_or_e, &mut te_num, te_buf, kiki);
+        } else {
+            if s_or_e == KomaInf::Self_ {
+                king = self.king_s;
+            } else {
+                king = self.king_e;
+            }
+            let check: USquare;
+            let mut id: usize = 0;
+            while id <= 31 {
+                if kiki == (1usize << id) {
+                    break;
+                }
+                id += 1;
+            }
+            if id < 16 {
+                check = Kyokumen::get_offset_sq(king, DIRECT[id]);
+            } else {
+                check = self.search(king, -DIRECT[id - 16]);
+            }
+            //王手駒を取る
+            self.move_to(s_or_e, &mut te_num, te_buf, check, pin);
+
+            //玉を動かす
+            self.move_king(s_or_e, &mut te_num, te_buf, kiki);
+
+            if id >= 16 {
+                //合駒をする手を生成する
+                let mut i: USquare = Kyokumen::get_offset_sq(king, id as ISquare - 16);
+                while !self.is_exists(i) {
+                    self.move_to(s_or_e, &mut te_num, te_buf, i, pin); //移動合
+                    i = Kyokumen::get_offset_sq(i, id as ISquare - 16);
+                }
+                let mut i: USquare = Kyokumen::get_offset_sq(king, id as ISquare - 16);
+                while !self.is_exists(i) {
+                    self.put_to(s_or_e, &mut te_num, te_buf, i, pin); //駒を打つ合
+                    i = Kyokumen::get_offset_sq(i, id as ISquare - 16);
+                }
+            }
+        }
+        return te_num;
+    }
+
+    /// TODO 玉の動く手の生成
+    fn move_king(
+        &self,
+        s_or_e: KomaInf,
+        te_num: &mut TeNum,
+        te_top: &mut [Te; TE_LEN],
+        kiki: Kiki,
+    ) {
+        let mut id: Option<USquare> = None; //隣接王手駒の位置のid
+
+        // 両王手でないなら王手駒の位置を探す
+        for i in 0..8 {
+            if (kiki & (1 << i)) != 0 {
+                id = Some(i);
+                break;
+            }
+        }
+        if let Some(id) = id {
+            // 隣接の王手 最初に取る手を生成するのだ
+            if s_or_e == KomaInf::Self_ {
+                let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_s, id as isize)];
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Enemy).stood())
+                    && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s,id as isize)) //敵の駒が効いていない
+                    && !(kiki & (1 << (23-id))).stood()
+                //敵の飛駒で貫かれていない
+                {
+                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[id], 0, 0);
+                }
+            } else {
+                let koma: KomaInf = self.ban[Kyokumen::get_offset_sq(self.king_e, id as isize)];
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Self_).stood())
+                    && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, id as isize)) //敵の駒が効いていない
+                    && !(kiki & (1 << (23-id))).stood()
+                //敵の飛駒で貫かれていない
+                {
+                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[id], 0, 0);
+                }
+            }
+        }
+
+        for i in 0..8 {
+            if Some(i) == id {
+                continue;
+            }
+            if s_or_e == KomaInf::Self_ {
+                let koma: KomaInf =
+                    self.ban[(self.king_s as ISquare - DIRECT[i as usize]) as usize];
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Enemy).stood())
+                    && !self.is_control_e(Kyokumen::get_offset_sq(self.king_s, i as isize)) //敵の駒が効いていない
+                    && !(kiki & (1 << (23-i))).stood()
+                //敵の飛駒で貫かれていない
+                {
+                    self.add_move(s_or_e, te_num, te_top, self.king_s, -DIRECT[i], 0, 0);
+                }
+            } else {
+                let koma: KomaInf =
+                    self.ban[(self.king_e as ISquare - DIRECT[i as usize]) as usize];
+                if ( koma==KomaInf::EMP || (koma & KomaInf::Self_).stood())
+                        && !self.is_control_s(Kyokumen::get_offset_sq(self.king_e, i as isize)) //敵の駒が効いていない
+                        && !(kiki & (1 << (23-i))).stood()
+                //敵の飛駒で貫かれていない
+                {
+                    self.add_move(s_or_e, te_num, te_top, self.king_e, -DIRECT[i], 0, 0);
+                }
+            }
+        }
+    }
+
+    /// 手の生成：成り・不成りも意識して、駒の動く手を生成する。
     fn add_move(
         &self,
         s_or_e: KomaInf,
@@ -1280,4 +1017,143 @@ impl Kyokumen {
             }
         }
     }
+
+    /// 飛車角香車がまっすぐに進む手の生成
+    fn add_straight(
+        &self,
+        s_or_e: KomaInf,
+        te_num: &mut TeNum,
+        te_top: &mut [Te; TE_LEN],
+        from: USquare,
+        dir: ISquare,
+        pin: ISquare,
+        r_pin: ISquare, /* =0 */
+    ) {
+        if dir == r_pin || dir == -r_pin {
+            return;
+        }
+        let mut i: isize;
+        if pin == 0 || pin == dir || pin == -dir {
+            // 空白の間、動く手を生成する
+            i = dir;
+            while self.ban[(from as isize + i) as usize] == KomaInf::EMP {
+                self.add_move(s_or_e, te_num, te_top, from, i, 0, 0);
+                i += dir;
+            }
+            // 味方の駒でないなら、そこへ動く
+            if !((self.ban[(from as isize + i) as usize] & s_or_e).stood()) {
+                self.add_move(s_or_e, te_num, te_top, from, i, 0, 0);
+            }
+        }
+    }
+
+    /// toに動く手の生成
+    fn move_to(
+        &mut self,
+        s_or_e: KomaInf,
+        te_num: &mut TeNum,
+        te_top: &mut [Te; TE_LEN],
+        to: USquare,
+        pin: &Pin,
+    ) {
+        let mut dan: USquare = to & 0x0f;
+        if s_or_e == KomaInf::Enemy {
+            dan = 10 - dan;
+        }
+        if self.hand[(s_or_e | KomaInf::FU) as usize] > 0 && dan > 1 {
+            // 歩を打つ手を生成
+            // 二歩チェック
+            let suji: USquare = to & 0xf0;
+            let mut nifu: bool = false;
+            for d in 1..=9 {
+                if self.ban[suji + d] == s_or_e | KomaInf::FU {
+                    nifu = true;
+                    break;
+                }
+            }
+            // 打ち歩詰めもチェック
+            if !nifu && !self.utifudume(s_or_e, to, pin) {
+                te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::FU, KomaInf::EMP);
+                *te_num += 1;
+            }
+        }
+        if self.hand[(s_or_e | KomaInf::KY) as usize] > 0 && dan > 1 {
+            // 香を打つ手を生成
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KY, KomaInf::EMP);
+            *te_num += 1;
+        }
+        if self.hand[(s_or_e | KomaInf::KE) as usize] > 0 && dan > 2 {
+            te_top[*te_num as usize] = Te::from_4(0, to, s_or_e | KomaInf::KE, KomaInf::EMP);
+            *te_num += 1;
+        }
+        for koma in KomaInf::GI as usize..=KomaInf::HI as usize {
+            if self.hand[s_or_e as usize | koma as usize] > 0 {
+                te_top[*te_num as usize] = Te::from_4(
+                    0,
+                    to,
+                    KomaInf::from_usize(s_or_e as usize | koma as usize).unwrap(),
+                    KomaInf::EMP,
+                );
+                *te_num += 1;
+            }
+        }
+    }
+
+    /// それっぽく表示する。
+    pub fn  fprint(&self){
+        let mut x;
+        let mut y = 0;
+        print!("持ち駒：");
+        x = KomaInf::EHI;
+        while x >= KomaInf::EFU as usize {
+            if self.hand[x] > 1 {
+                y = 1;
+                print!("{}", komaStr2[x]);
+                print!("{}", "一二三四五六七八九101112131415161718"+2*self.hand[x]-2);
+            } else if self.hand[x] == 1 {
+                y = 1;
+                print!("{}", komaStr2[x]);
+            }
+            x-=1;
+        }
+        if y {
+            fprintf(fp,"\n");
+        } else {
+            fprintf(fp,"なし\n");
+        }
+        fprintf(fp,"  ９ ８ ７ ６ ５ ４ ３ ２ １ \n");
+        fprintf(fp,"+---------------------------+\n");
+        for(y=1;y<=9;y++) {
+            fprintf(fp,"|");
+            for(x=9;x>=1;x--) {
+                fprintf(fp,komaStr[ban[x*16+y]]);
+            }
+            fprintf(fp,"|%2.2s","一二三四五六七八九" + y*2-2);
+            fprintf(fp,"\n");
+        }
+        fprintf(fp,"+---------------------------+\n");
+        fprintf(fp,"持ち駒：");
+        y = 0;
+        for (x = SHI; x >= SFU; x--) {
+            if (Hand[x] > 1) {
+                y = 1;
+                fprintf(fp,"%s%2.2s", komaStr2[x], "一二三四五六七八九101112131415161718"+2*Hand[x]-2);
+            } else if (Hand[x] == 1) {
+                y = 1;
+                fprintf(fp,"%s", komaStr2[x]);
+            }
+        }
+        if (y) {
+            fprintf(fp,"\n");
+        } else {
+            fprintf(fp,"なし\n");
+        }
+    
+    }
+
+    /* TODO
+    pub fn print() {
+        FPrint(stdout);
+    }
+    */
 }
