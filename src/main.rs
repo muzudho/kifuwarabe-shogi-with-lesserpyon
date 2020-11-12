@@ -8,6 +8,7 @@ pub mod kyokumen;
 pub mod logic;
 pub mod te;
 
+use crate::num_traits::FromPrimitive;
 use num_derive::FromPrimitive;
 use rand::prelude::*;
 
@@ -25,9 +26,14 @@ fn is_illegal(te: Te, te_num: TeNum, te_buf: &mut [Te; TE_LEN]) -> bool {
 }
 
 struct Sikou {}
+impl Default for Sikou {
+    fn default() -> Self {
+        Sikou {}
+    }
+}
 /// 簡単な思考ルーチンです。要するに、合法な手の中から、適当な手を乱数で選んで指すだけです。
 impl Sikou {
-    pub fn think(s_or_e: KomaInf, k: &mut Kyokumen) -> Te {
+    pub fn think(&self, s_or_e: KomaInf, k: &mut Kyokumen) -> Te {
         let mut te_buf: [Te; 600] = [Te::default(); 600];
         let te_num = k.make_legal_moves(s_or_e, &mut te_buf, &mut None);
 
@@ -48,12 +54,115 @@ impl Sikou {
 
 fn main() {
     println!("Kifuwarabe's shogi with Lesserpyon");
-    println!(
-        "Computer\
-shogi title match"
-    );
 
-    let _kyokumen = Kyokumen::default();
+    // 平手の初期配置です。見やすいでしょ？変換はその分複雑ですけど。
+    use crate::KomaInf::*;
+    let hirate_ban: [[KomaInf; 9]; 9] = [
+        [EKY, EKE, EGI, EKI, EOU, EKI, EGI, EKE, EKY],
+        [EMP, EHI, EMP, EMP, EMP, EMP, EMP, EKA, EMP],
+        [EFU, EFU, EFU, EFU, EFU, EFU, EFU, EFU, EFU],
+        [EMP, EMP, EMP, EMP, EMP, EMP, EMP, EMP, EMP],
+        [EMP, EMP, EMP, EMP, EMP, EMP, EMP, EMP, EMP],
+        [EMP, EMP, EMP, EMP, EMP, EMP, EMP, EMP, EMP],
+        [SFU, SFU, SFU, SFU, SFU, SFU, SFU, SFU, SFU],
+        [EMP, SKA, EMP, EMP, EMP, EMP, EMP, SHI, EMP],
+        [SKY, SKE, SGI, SKI, SOU, SKI, SGI, SKE, SKY],
+    ];
+    // こちらは面倒でもEHIまで0を並べないといけません。
+    let motigoma: [usize; KomaInf::EHI as usize + 1] = [
+        // 空空空空空空空空空空空空空空空空空歩香桂銀金角飛王と杏圭全金馬龍空歩香桂銀金角飛
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    // ０手目で、平手の局面で、持ち駒なしから開始しましょう。
+    let k = Kyokumen::from_3(0, hirate_ban, motigoma);
+
+    // これはまだ簡単な思考部なので、初期化も簡単です。
+    let sikou = Sikou::default();
+
+    // 将棋の局面で、最大の手数は５７９手だそうです。
+    let te_buf: [Te; TE_LEN] = [Te::default(); TE_LEN];
+    let te_num: usize;
+
+    // 手前のプレイヤーから開始します。
+    let s_or_e = KomaInf::Self_;
+
+    // もしも合法手がなくなったら、詰み＝負けです。
+    // 合法手がある間はゲームを継続します。
+    while (te_num = k.make_legal_moves(s_or_e, &mut te_buf, &mut None)) > 0 {
+        k.print();
+        let mut te: Te;
+        if s_or_e == KomaInf::Self_ {
+            // 手を入力します。
+            let mut buf: String = String::new();
+            match std::io::stdin().read_line(&mut buf) {
+                Ok(_n) => {}
+                Err(why) => panic!(&format!("Failed to read line. / {}", why)),
+            };
+            // 入力の方法:from,to,promote
+            // ただし、歩を打つときはfromを01、香を打つときはfromを02…とする。
+            // promoteは、成るときに*を付ける。
+            let mut from: u8;
+            let mut to: u8;
+            let koma;
+            let capture;
+            let promote: [char; 2] = ['\0'; 2];
+
+            let to_str;
+            let promote_str;
+            let mut ss = 0;
+            for ch in buf.chars() {
+                match ss {
+                    0 => from += (ch.to_digit(10).unwrap() * 10) as u8,
+                    1 => from += ch.to_digit(10).unwrap() as u8,
+                    2 => to += (ch.to_digit(10).unwrap() * 10) as u8,
+                    3 => to += ch.to_digit(10).unwrap() as u8,
+                    4 => promote[0] = ch,
+                    _ => break,
+                }
+                ss += 1;
+            }
+            if ss < 2 {
+                continue;
+            };
+            if from < KomaInf::OU as u8 {
+                koma = KomaInf::from_u8(KomaInf::Self_ as u8 | from).unwrap();
+                from = 0;
+            } else {
+                koma = k.ban[from as usize];
+            }
+            capture = k.ban[to as usize];
+            if ss == 3 && promote[0] == '*' {
+                te = Te::from_5(from as USquare, to as USquare, koma, capture, 1);
+            } else {
+                te = Te::from_5(from as USquare, to as USquare, koma, capture, 0);
+            }
+
+            // 入力された手が、おかしかったら、
+            if is_illegal(te, teNum, teBuf) {
+                // もう一回盤面を表示して入力しなおしです。
+                print!("入力された手が異常です。入力しなおしてください。\n");
+                continue;
+            }
+        }
+        if s_or_e == KomaInf::Enemy {
+            te = sikou.think(s_or_e, k);
+        }
+
+        te.print();
+        k.move_(s_or_e, te);
+        if s_or_e == KomaInf::Self_ {
+            s_or_e = KomaInf::Enemy;
+        } else {
+            s_or_e = KomaInf::Self_;
+        }
+    }
+    if s_or_e == KomaInf::Self_ {
+        print!("後手の勝ち。\n");
+    } else {
+        print!("先手の勝ち。\n");
+    }
+    return 0;
 }
 
 /// れさぴょん はしてないけど、盤のマス番地の型は明示しとこうぜ☆（＾～＾）
