@@ -2,6 +2,7 @@ extern crate num_derive;
 extern crate num_traits;
 
 pub mod koma_inf;
+pub mod koma_info;
 pub mod koma_moves;
 pub mod kyokumen;
 pub mod logic;
@@ -46,6 +47,7 @@ type Pin = [ISquare; BAN_LEN];
 /// Empty=0,
 /// EMP=0,
 /// のような書き方は Rust言語では already exists になるので、名前の長い方を この列挙型に分ける。
+#[derive(FromPrimitive)]
 pub enum KomaInfo {
     /// 何もないところ
     Empty = 0,

@@ -241,7 +241,7 @@ impl Kyokumen {
         if self.ban[te.to as usize]!=KomaInf::EMP {
             // 相手の駒を持ち駒にする。
             // 持ち駒にする時は、成っている駒も不成りに戻す。（&~PROMOTED）
-            self.hand[(s_or_e|(self.ban[te.to as usize] & !KomaInfo::Promoted & !KomaInf::Self_ & !KomaInf::Enemy)) as usize]+=1;
+            self.hand[(s_or_e|(self.ban[te.to as usize] & !KomaInfo::Promoted.to_koma_inf() & !KomaInf::Self_ & !KomaInf::Enemy)) as usize]+=1;
             //取った駒の効きを消す
             i = 0;
             b = 1;

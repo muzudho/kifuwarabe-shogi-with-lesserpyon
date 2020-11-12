@@ -1,7 +1,7 @@
 use crate::logic::Logic;
 use crate::num_traits::FromPrimitive;
 use crate::KomaInf;
-use std::ops::{BitAnd, BitOr};
+use std::ops::{BitAnd, BitOr, Not};
 
 impl BitAnd for KomaInf {
     type Output = KomaInf;
@@ -20,6 +20,15 @@ impl BitOr for KomaInf {
     fn bitor(self, rhs: Self) -> Self::Output {
         // ビット演算で利用するときは 符号ビット は考えてないはずだから、型キャストは unsigned 型にしろだぜ☆（＾～＾）
         KomaInf::from_usize(self as usize | rhs as usize).unwrap()
+    }
+}
+
+impl Not for KomaInf {
+    type Output = KomaInf;
+
+    /// 0x01010101 を 0x10101010 にする操作。
+    fn not(self) -> Self::Output {
+        KomaInf::from_u8(!(self as u8)).unwrap()
     }
 }
 
